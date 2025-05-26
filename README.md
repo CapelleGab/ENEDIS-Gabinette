@@ -1,258 +1,334 @@
-# 📊 Analyse des Statistiques PMT (Planning de Maintenance Technique)
+# 📊 Statistiques PMT - Analyse des Plannings Enedis
 
-Ce projet analyse les données de planning journalier pour calculer les statistiques de présence et d'heures travaillées par employé et par équipe.
+> **Application d'analyse des statistiques de Planning de Maintenance Technique (PMT) pour Enedis**
 
-## 🎯 Objectif
+## 🎯 Qu'est-ce que c'est ?
 
-Traiter les fichiers CSV de planning journalier pour générer des statistiques détaillées sur :
+Cette application analyse automatiquement vos fichiers CSV de planning journalier et génère :
 
-- Les heures travaillées par employé
-- Les jours de présence et d'absence
-- Les moyennes par équipe
-- L'analyse des codes d'absence
-
-## 📋 Prérequis
-
-- Python 3.7+
-- Pandas
-- NumPy
-- OpenPyXL
-
-## 🚀 Installation
-
-1. Clonez le projet ou téléchargez les fichiers
-2. Créez un environnement virtuel :
-
-```bash
-python -m venv .venv
-source .venv/bin/activate  # Sur macOS/Linux
-# ou
-.venv\Scripts\activate     # Sur Windows
-```
-
-3. Installez les dépendances :
-
-```bash
-pip install pandas numpy openpyxl
-```
-
-## 📁 Structure du projet
-
-```
-StatistiquePMT/
-├── main_new.py                # Script principal d'analyse (nouvelle architecture)
-├── main.py                    # Script principal d'analyse (ancienne version)
-├── config.py                  # Configuration centralisée
-├── utils/                     # Modules utilitaires
-│   ├── __init__.py           # Package utils
-│   ├── data_loader.py        # Chargement des données
-│   ├── horaires.py           # Gestion des horaires
-│   ├── filtres.py            # Filtrage des données
-│   ├── calculateurs.py       # Calculs statistiques
-│   ├── formatters.py         # Formatage des données
-│   ├── excel_writer.py       # Sauvegarde Excel
-│   └── reporter.py           # Génération de rapports
-├── requirements.txt           # Dépendances Python
-├── Planning_journalier_2024.csv  # Fichier source (à fournir)
-├── Statistiques_PMT_2024.xlsx    # Fichier de résultats généré
-├── LICENSE                    # Licence propriétaire Enedis
-└── README.md                  # Ce fichier
-```
-
-## 🏃‍♂️ Utilisation
-
-### Nouvelle architecture (recommandée)
-
-```bash
-.venv/bin/python main.py
-```
-
-### Ancienne version (monolithique)
-
-```bash
-.venv/bin/python old/main.py
-```
-
-### Configuration
-
-Modifiez le fichier `config.py` pour ajuster les paramètres :
-
-```python
-ANNEE = '2024'
-CODES_EQUIPES = ['PV IT ASTREINTE', 'PV B ASTREINTE', ...]
-HORAIRE_DEBUT_REFERENCE = '07:30:00'
-HORAIRE_FIN_REFERENCE = '16:15:00'
-```
-
-## 📊 Logique de calcul
-
-### Heures travaillées
-
-- **Code avec valeur** : `8h - valeur = heures travaillées` (jour partiel)
-- **Code sans valeur** : `0h travaillées` (8h d'absence complète)
-- **Pas de code** : `8h travaillées` (journée complète)
-
-### Types de jours
-
-- **Jours complets** : 8h exactement travaillées
-- **Jours partiels** : Code d'absence avec valeur > 0 (ex: Code="FP", Valeur=7.0 → 1h travaillée)
-- **Jours absents** : 0h travaillées (absence complète)
-
-### Gestion du format français
-
-Le script gère automatiquement la conversion des décimales au format français :
-
-- `'0,500'` → `0.5` (30 minutes)
-- `'4,500'` → `4.5` (4h30)
-- `'8,000'` → `8.0` (8h complètes)
-
-### Filtres appliqués
-
-1. ✅ Suppression des week-ends (Samedi, Dimanche)
-2. ✅ Suppression des jours fériés
-3. ✅ Suppression des jours d'astreinte
-4. ✅ Conservation uniquement des horaires 'J'
-5. ✅ Filtrage sur les horaires de référence :
-   - `07:30:00 à 16:15:00` (continu)
-   - `07:30:00 à 12:00:00 + 12:45:00 à 16:15:00` (avec pause)
-
-## 📈 Résultats générés
-
-### Fichier Excel avec 2 feuilles :
-
-#### 1. **Statistiques_Employés**
-
-| Colonne                         | Description                                       |
-| ------------------------------- | ------------------------------------------------- |
-| Nom                             | Nom de l'employé                                  |
-| Prénom                          | Prénom de l'employé                               |
-| Équipe                          | Équipe d'appartenance                             |
-| Jours_Présents_Complets         | Nombre de jours avec 8h complètes                 |
-| Jours_Partiels                  | Nombre de jours avec temps partiel                |
-| Total_Jours_Travaillés          | Somme des jours complets + partiels (en fraction) |
-| Total_Heures_Travaillées        | Somme totale des heures travaillées               |
-| Jours_Complets                  | Nombre de jours avec 8h exactement                |
-| Jours_Absents                   | Nombre de jours d'absence complète                |
-| Total_Heures_Absence            | Somme totale des heures d'absence                 |
-| Présence\_%_365j                | Pourcentage de présence sur 365 jours             |
-| Moyenne_Heures_Par_Jour_Présent | Moyenne d'heures par jour présent                 |
-
-#### 2. **Moyennes*par*Équipe**
-
-Moyennes calculées par équipe pour tous les indicateurs.
-
-## 📋 Exemple de sortie console
-
-```
-Traitement des statistiques PMT pour l'année 2024
-Chargement des données depuis le fichier CSV...
-Données chargées : 170558 lignes, 44 colonnes
-
-Application des filtres de base...
-Après suppression week-ends: 32822 lignes
-Après suppression jours fériés: 31562 lignes
-Après suppression astreintes: 23744 lignes
-Après filtrage horaires 'J': 19227 lignes
-Après filtrage horaires 07:30:00-16:15:00: 18721 lignes
-
-Nombre d'employés analysés: 129
-Moyenne jours présents par employé: 71.4 jours
-Moyenne jours partiels par employé: 73.7 jours
-Moyenne total jours travaillés par employé: 82.8 jours
-Moyenne heures totales par employé: 662.3 heures
-Moyenne jours complets (8h) par employé: 71.4 jours
-Moyenne jours absents par employé: 54.0 jours
-
-Fichier généré: Statistiques_PMT_2024.xlsx
-```
-
-## 🔍 Codes d'absence traités
-
-Le script traite tous les codes présents dans les données, notamment :
-
-- **Codes vides** (' ') : Journées complètes
-- **Codes numériques** (21, 10, 41, 52, etc.) : Absences avec calcul
-- **Codes alphabétiques** (J4, FP, D, etc.) : Divers types d'absence
-
-## 🛠️ Fonctionnalités avancées
-
-### Classe CSVToXLSXConverter
-
-Utilitaire pour convertir les fichiers CSV en format Excel :
-
-```python
-from csv_converter import CSVToXLSXConverter
-
-converter = CSVToXLSXConverter(encoding='latin1', separator=';')
-result = converter.convert_file('fichier.csv', 'fichier.xlsx')
-```
-
-### Analyse des horaires
-
-Le script analyse automatiquement les horaires disponibles dans les données et affiche un diagnostic des plages horaires trouvées.
-
-## 🐛 Dépannage
-
-### Erreurs courantes
-
-1. **Fichier CSV introuvable**
-
-   ```
-   ERREUR : Le fichier CSV 'Planning_journalier_2024.csv' n'existe pas.
-   ```
-
-   → Vérifiez que le fichier CSV est présent dans le répertoire
-
-2. **Problème d'encodage**
-   → Le script utilise l'encodage `latin1` par défaut
-
-3. **Colonnes manquantes**
-   → Vérifiez que le fichier CSV contient toutes les colonnes requises
-
-4. **Jours partiels à 0**
-   → Problème résolu : Le script gère maintenant automatiquement la conversion du format français des décimales (virgule → point)
-
-### Corrections récentes
-
-- ✅ **v1.1** : Correction détection jours partiels - format français des décimales
-- ✅ Gestion automatique de la conversion `'0,500'` → `0.5`
-- ✅ Suppression du code de debug devenu inutile
-- ✅ Optimisation de la logique de calcul des statistiques
-
-## 📝 Notes techniques
-
-- **Encodage** : `latin1` pour la lecture des fichiers CSV
-- **Séparateur** : `;` (point-virgule)
-- **Format de sortie** : Excel (.xlsx)
-- **Gestion des doublons** : Suppression automatique par employé/jour
-- **Format décimal** : Conversion automatique du format français (virgule) vers format anglais (point)
-- **Détection jours partiels** : Code d'absence + Valeur > 0 = Jour partiel
-
-## 🤝 Contribution
-
-Pour contribuer au projet :
-
-1. Forkez le repository
-2. Créez une branche pour votre fonctionnalité
-3. Committez vos changements
-4. Poussez vers la branche
-5. Ouvrez une Pull Request
-
-## 📄 Licence
-
-Ce projet est sous licence propriétaire Enedis. Voir le fichier [LICENSE](LICENSE) pour plus de détails.
-
-**Usage autorisé** : Exclusivement pour les besoins internes d'Enedis  
-**Confidentialité** : Ce projet contient des données et processus métier confidentiels  
-**Restrictions** : Toute distribution ou utilisation externe est interdite
+- ✅ **Statistiques détaillées** par employé (heures travaillées, absences, etc.)
+- ✅ **Moyennes par équipe** pour comparer les performances
+- ✅ **Résumé complet** avec top employés et meilleures équipes
+- ✅ **Export Excel** pour partager les résultats
 
 ---
 
-**Auteur** : Développé pour l'analyse des statistiques PMT Enedis  
-**Version** : 1.1  
-**Dernière mise à jour** : MAI 2025
+# 👥 UTILISATION (Pour les employés Enedis)
 
-### Historique des versions
+## 🚀 Installation Ultra Simple
 
-- **v1.1** (Décembre 2024) : Correction détection jours partiels + gestion format français
-- **v1.0** (2024) : Version initiale
+### Étape 1 : Télécharger l'application
+
+1. Récupérez le fichier `StatistiquesPMT.exe` auprès de votre administrateur
+2. Placez-le dans un dossier de votre choix (ex: `C:\StatistiquePMT\`)
+3. **C'est tout !** Aucune installation requise
+
+### Étape 2 : Utilisation
+
+1. **Double-cliquez** sur `StatistiquesPMT.exe`
+2. L'interface graphique s'ouvre automatiquement
+
+## 🖥️ Mode Interface Graphique (Recommandé)
+
+**Utilisation simple :**
+
+1. Cliquez sur "🔍 Sélectionner le fichier CSV"
+2. Choisissez votre fichier de planning journalier
+3. Cliquez sur "🚀 Lancer l'analyse"
+4. Consultez le résumé dans le journal d'exécution
+5. Utilisez "💾 Exporter vers Excel" pour sauvegarder
+
+**Avantages :**
+
+- ✅ Interface intuitive avec boutons
+- ✅ Résumé affiché en temps réel
+- ✅ Export Excel en un clic
+- ✅ Aide intégrée
+
+## 📊 Format des Données d'Entrée
+
+Votre fichier CSV doit contenir au minimum ces colonnes :
+
+- `Nom` : Nom de famille
+- `Prénom` : Prénom
+- `Équipe` : Code équipe
+- `Date` : Date au format YYYY-MM-DD
+- `Code_Présence` : Code de présence/absence
+- `Heure_Début` : Heure de début (optionnel)
+- `Heure_Fin` : Heure de fin (optionnel)
+
+## 📈 Résultats Générés
+
+### Dans l'interface
+
+- **Journal d'exécution** : Résumé complet avec statistiques
+- **Top 5 employés** par heures travaillées
+- **Meilleure équipe** par performance
+- **Répartition par équipe** détaillée
+
+### Fichier Excel exporté
+
+- **Feuille "Statistiques_Employés"** : Détail par personne
+- **Feuille "Moyennes_Équipes"** : Résumé par équipe
+
+## 🆘 Support Utilisateur
+
+### Problèmes Courants
+
+**❌ "L'application ne se lance pas"**
+
+- Vérifiez que vous avez les droits d'exécution
+- Contactez votre administrateur IT
+
+**❌ "Erreur lors du chargement CSV"**
+
+- Vérifiez que votre fichier CSV contient les bonnes colonnes
+- Assurez-vous que le fichier n'est pas ouvert dans Excel
+
+**❌ "Résultats incohérents"**
+
+- Vérifiez le format des dates dans votre CSV
+- Contactez l'équipe de développement
+
+### Contact Support
+
+- **Support technique** : CAPELLE Gabin
+- **Version** : 2.0
+- **Dernière mise à jour** : 2025
+
+---
+
+# 🛠️ DÉVELOPPEMENT (Pour les développeurs)
+
+## 📋 Prérequis Développement
+
+- Python 3.8+
+- Git (optionnel)
+- Éditeur de code (VS Code, PyCharm, etc.)
+
+## 🚀 Installation Environnement de Développement
+
+### Étape 1 : Cloner le projet
+
+```bash
+git clone <url-du-projet>
+cd StatistiquePMT
+```
+
+### Étape 2 : Créer l'environnement virtuel
+
+```bash
+# Créer l'environnement virtuel
+python -m venv .venv
+
+# Activer l'environnement virtuel
+# Sur Windows :
+.venv\Scripts\activate
+# Sur Mac/Linux :
+source .venv/bin/activate
+
+# Installer les dépendances
+pip install -r requirements.txt
+```
+
+## 🖥️ Modes de Développement
+
+### Mode Interface Graphique
+
+```bash
+# Activer l'environnement virtuel
+.venv\Scripts\activate
+
+# Lancer l'interface graphique
+python gui_interface.py
+```
+
+### Mode Console/Script
+
+```bash
+# Activer l'environnement virtuel
+.venv\Scripts\activate
+
+# Lancer l'analyse en mode script
+python main.py
+```
+
+### Mode Debug
+
+```bash
+# Avec logs détaillés
+python gui_interface.py --debug
+
+# Avec profiling
+python main.py --profile
+```
+
+## 📁 Structure du Projet
+
+```
+StatistiquePMT/
+├── 📄 gui_interface.py          # Interface graphique principale
+├── 📄 main.py                   # Script en ligne de commande
+├── 📄 config.py                 # Configuration des paramètres
+├── 📁 utils/                    # Fonctions métier
+│   ├── 📄 __init__.py           # Package utils
+│   ├── 📄 data_loader.py        # Chargement des données
+│   ├── 📄 data_processor.py     # Traitement des données
+│   ├── 📄 statistics.py         # Calculs statistiques
+│   ├── 📄 excel_exporter.py     # Export Excel
+│   └── 📄 reporter.py           # Génération de rapports
+├── 📄 requirements.txt          # Dépendances Python
+├── 📁 .venv/                    # Environnement virtuel
+├── 📁 tests/                    # Tests unitaires
+├── 📄 .gitignore               # Fichiers ignorés par Git
+└── 📄 README.md                 # Ce fichier
+```
+
+## 🔧 Dépendances
+
+```
+pandas>=1.5.0      # Manipulation des données
+openpyxl>=3.0.0    # Export Excel
+```
+
+### Dépendances de développement
+
+```bash
+# Installer les dépendances de dev
+pip install pytest black flake8 mypy
+
+# Ou via requirements-dev.txt
+pip install -r requirements-dev.txt
+```
+
+## ⚙️ Configuration
+
+Le fichier `config.py` contient tous les paramètres :
+
+```python
+# Horaires de travail
+HEURE_DEBUT_MATIN = 8
+HEURE_FIN_MATIN = 12
+HEURE_DEBUT_APRES_MIDI = 13
+HEURE_FIN_APRES_MIDI = 17
+
+# Équipes à analyser
+EQUIPES_INCLUSES = ['EQ1', 'EQ2', 'EQ3']
+
+# Codes de présence à ignorer
+CODES_A_IGNORER = ['CONG', 'MALA', 'FORM']
+
+# Fichiers par défaut
+FICHIER_CSV = 'Planning_journalier_2024.csv'
+FICHIER_EXCEL = 'Statistiques_PMT_2024.xlsx'
+```
+
+## 🏗️ Créer l'Exécutable
+
+### Méthode Simple (Recommandée)
+
+```bash
+# Activer l'environnement virtuel windows
+.venv\Scripts\activate
+
+# Activer l'environnement virtuel mac
+. .venv\bin\activate
+
+# Installer auto-py-to-exe
+pip install auto-py-to-exe
+
+# Lancer l'interface de création
+python -m auto_py_to_exe
+```
+
+**Configuration dans auto-py-to-exe :**
+
+1. **Script Location** : `gui_interface.py`
+2. **Onefile** : ✅ Coché
+3. **Console Window** : ❌ Décoché
+4. **Additional Files** : Ajouter `utils/` et `config.py`
+5. **Icon** : Optionnel (fichier .ico)
+
+### Méthode PyInstaller (Avancée)
+
+```bash
+# Installation
+pip install pyinstaller
+
+# Création de l'exécutable
+pyinstaller --onefile --windowed --add-data "utils;utils" --add-data "config.py;." gui_interface.py
+
+# Renommer l'exécutable
+mv dist/gui_interface.exe dist/StatistiquesPMT.exe
+```
+
+## 🧪 Tests
+
+```bash
+# Lancer tous les tests
+pytest
+
+# Tests avec couverture
+pytest --cov=utils
+
+# Tests spécifiques
+pytest tests/test_data_loader.py
+```
+
+## 📝 Contribution
+
+### Workflow de développement
+
+1. Créer une branche : `git checkout -b feature/nouvelle-fonctionnalite`
+2. Développer et tester
+3. Formater le code : `black .`
+4. Vérifier la qualité : `flake8`
+5. Committer : `git commit -m "feat: nouvelle fonctionnalité"`
+6. Pousser : `git push origin feature/nouvelle-fonctionnalite`
+7. Créer une Pull Request
+
+### Standards de code
+
+- **Formatage** : Black
+- **Linting** : Flake8
+- **Type hints** : MyPy
+- **Tests** : Pytest
+- **Documentation** : Docstrings Google Style
+
+## 🐛 Debug et Logs
+
+### Activer les logs détaillés
+
+```python
+import logging
+logging.basicConfig(level=logging.DEBUG)
+```
+
+### Fichiers de log
+
+- `logs/application.log` : Logs généraux
+- `logs/errors.log` : Erreurs uniquement
+- `logs/performance.log` : Métriques de performance
+
+## 📄 Licence
+
+Ce projet est sous licence MIT. Voir le fichier `LICENSE` pour plus de détails.
+
+---
+
+## 🎉 Démarrage Rapide
+
+### Pour les utilisateurs
+
+1. **Récupérer** `StatistiquesPMT.exe`
+2. **Double-cliquer** dessus
+3. **Sélectionner** votre fichier CSV
+4. **Profiter** des résultats ! 🚀
+
+### Pour les développeurs
+
+1. **Cloner** le projet
+2. **Créer** l'environnement : `python -m venv .venv`
+3. **Activer** : `.venv\Scripts\activate`
+4. **Installer** : `pip install -r requirements.txt`
+5. **Développer** ! 🛠️
