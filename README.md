@@ -40,10 +40,22 @@ pip install pandas numpy openpyxl
 
 ```
 StatistiquePMT/
-├── main.py                    # Script principal d'analyse
-├── csv_converter.py           # Utilitaire de conversion CSV vers XLSX
+├── main_new.py                # Script principal d'analyse (nouvelle architecture)
+├── main.py                    # Script principal d'analyse (ancienne version)
+├── config.py                  # Configuration centralisée
+├── utils/                     # Modules utilitaires
+│   ├── __init__.py           # Package utils
+│   ├── data_loader.py        # Chargement des données
+│   ├── horaires.py           # Gestion des horaires
+│   ├── filtres.py            # Filtrage des données
+│   ├── calculateurs.py       # Calculs statistiques
+│   ├── formatters.py         # Formatage des données
+│   ├── excel_writer.py       # Sauvegarde Excel
+│   └── reporter.py           # Génération de rapports
+├── requirements.txt           # Dépendances Python
 ├── Planning_journalier_2024.csv  # Fichier source (à fournir)
 ├── Statistiques_PMT_2024.xlsx    # Fichier de résultats généré
+├── LICENSE                    # Licence propriétaire Enedis
 └── README.md                  # Ce fichier
 ```
 
@@ -65,16 +77,27 @@ HORAIRE_FIN_REFERENCE = '16:15:00'
 
 ## 🏃‍♂️ Utilisation
 
-### Analyse principale
+### Nouvelle architecture (recommandée)
 
 ```bash
-python main.py
+.venv/bin/python main.py
 ```
 
-### Conversion CSV vers XLSX (optionnel / A FIX)
+### Ancienne version (monolithique)
 
 ```bash
-python csv_converter.py
+.venv/bin/python old/main.py
+```
+
+### Configuration
+
+Modifiez le fichier `config.py` dans le dossier `utils` pour ajuster les paramètres :
+
+```python
+ANNEE = '2024'
+CODES_EQUIPES = ['PV IT ASTREINTE', 'PV B ASTREINTE', ...]
+HORAIRE_DEBUT_REFERENCE = '07:30:00'
+HORAIRE_FIN_REFERENCE = '16:15:00'
 ```
 
 ## 📊 Logique de calcul
