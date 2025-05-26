@@ -81,9 +81,23 @@ python csv_converter.py
 
 ### Heures travaillées
 
-- **Code avec valeur** : `8h - valeur = heures travaillées`
+- **Code avec valeur** : `8h - valeur = heures travaillées` (jour partiel)
 - **Code sans valeur** : `0h travaillées` (8h d'absence complète)
 - **Pas de code** : `8h travaillées` (journée complète)
+
+### Types de jours
+
+- **Jours complets** : 8h exactement travaillées
+- **Jours partiels** : Code d'absence avec valeur > 0 (ex: Code="FP", Valeur=7.0 → 1h travaillée)
+- **Jours absents** : 0h travaillées (absence complète)
+
+### Gestion du format français
+
+Le script gère automatiquement la conversion des décimales au format français :
+
+- `'0,500'` → `0.5` (30 minutes)
+- `'4,500'` → `4.5` (4h30)
+- `'8,000'` → `8.0` (8h complètes)
 
 ### Filtres appliqués
 
@@ -97,30 +111,28 @@ python csv_converter.py
 
 ## 📈 Résultats générés
 
-### Fichier Excel avec 3 feuilles :
+### Fichier Excel avec 2 feuilles :
 
 #### 1. **Statistiques_Employés**
 
-| Colonne                         | Description                                |
-| ------------------------------- | ------------------------------------------ |
-| Nom                             | Nom de l'employé                           |
-| Prénom                          | Prénom de l'employé                        |
-| Équipe                          | Équipe d'appartenance                      |
-| Jours_Présents                  | Nombre de jours où l'employé était présent |
-| Total_Heures_Travaillées        | Somme totale des heures travaillées        |
-| Jours_Complets                  | Nombre de jours avec 8h complètes          |
-| Jours_Absents                   | Nombre de jours d'absence complète         |
-| Total_Heures_Absence            | Somme totale des heures d'absence          |
-| Présence\_%_365j                | Pourcentage de présence sur 365 jours      |
-| Moyenne_Heures_Par_Jour_Présent | Moyenne d'heures par jour présent          |
+| Colonne                         | Description                                       |
+| ------------------------------- | ------------------------------------------------- |
+| Nom                             | Nom de l'employé                                  |
+| Prénom                          | Prénom de l'employé                               |
+| Équipe                          | Équipe d'appartenance                             |
+| Jours_Présents_Complets         | Nombre de jours avec 8h complètes                 |
+| Jours_Partiels                  | Nombre de jours avec temps partiel                |
+| Total_Jours_Travaillés          | Somme des jours complets + partiels (en fraction) |
+| Total_Heures_Travaillées        | Somme totale des heures travaillées               |
+| Jours_Complets                  | Nombre de jours avec 8h exactement                |
+| Jours_Absents                   | Nombre de jours d'absence complète                |
+| Total_Heures_Absence            | Somme totale des heures d'absence                 |
+| Présence\_%_365j                | Pourcentage de présence sur 365 jours             |
+| Moyenne_Heures_Par_Jour_Présent | Moyenne d'heures par jour présent                 |
 
 #### 2. **Moyennes*par*Équipe**
 
 Moyennes calculées par équipe pour tous les indicateurs.
-
-#### 3. **Analyse_Codes**
-
-Analyse détaillée des codes utilisés par employé.
 
 ## 📋 Exemple de sortie console
 
@@ -137,10 +149,12 @@ Après filtrage horaires 'J': 19227 lignes
 Après filtrage horaires 07:30:00-16:15:00: 18721 lignes
 
 Nombre d'employés analysés: 129
-Moyenne jours présents par employé: 145.1 jours
-Moyenne heures totales par employé: 571.1 heures
+Moyenne jours présents par employé: 71.4 jours
+Moyenne jours partiels par employé: 73.7 jours
+Moyenne total jours travaillés par employé: 82.8 jours
+Moyenne heures totales par employé: 662.3 heures
 Moyenne jours complets (8h) par employé: 71.4 jours
-Moyenne jours absents par employé: 73.7 jours
+Moyenne jours absents par employé: 54.0 jours
 
 Fichier généré: Statistiques_PMT_2024.xlsx
 ```
@@ -188,12 +202,24 @@ Le script analyse automatiquement les horaires disponibles dans les données et 
 3. **Colonnes manquantes**
    → Vérifiez que le fichier CSV contient toutes les colonnes requises
 
+4. **Jours partiels à 0**
+   → Problème résolu : Le script gère maintenant automatiquement la conversion du format français des décimales (virgule → point)
+
+### Corrections récentes
+
+- ✅ **v1.1** : Correction détection jours partiels - format français des décimales
+- ✅ Gestion automatique de la conversion `'0,500'` → `0.5`
+- ✅ Suppression du code de debug devenu inutile
+- ✅ Optimisation de la logique de calcul des statistiques
+
 ## 📝 Notes techniques
 
 - **Encodage** : `latin1` pour la lecture des fichiers CSV
 - **Séparateur** : `;` (point-virgule)
 - **Format de sortie** : Excel (.xlsx)
 - **Gestion des doublons** : Suppression automatique par employé/jour
+- **Format décimal** : Conversion automatique du format français (virgule) vers format anglais (point)
+- **Détection jours partiels** : Code d'absence + Valeur > 0 = Jour partiel
 
 ## 🤝 Contribution
 
@@ -212,5 +238,10 @@ Ce projet est destiné à un usage interne pour l'analyse des données PMT.
 ---
 
 **Auteur** : Développé pour l'analyse des statistiques PMT Enedis  
-**Version** : 1.0  
-**Dernière mise à jour** : 2024
+**Version** : 1.1  
+**Dernière mise à jour** : Décembre 2024
+
+### Historique des versions
+
+- **v1.1** (Décembre 2024) : Correction détection jours partiels + gestion format français
+- **v1.0** (2024) : Version initiale
