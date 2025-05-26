@@ -4,7 +4,7 @@ Module de génération de rapports PMT.
 author : CAPELLE Gabin
 """
 
-from config import HORAIRE_DEBUT_REFERENCE, HORAIRE_FIN_REFERENCE, FICHIER_EXCEL, NOMS_FEUILLES
+from config import HORAIRE_DEBUT_REFERENCE, HORAIRE_FIN_REFERENCE, FICHIER_EXCEL, NOMS_FEUILLES, ANNEE
 
 
 def afficher_resume_final(stats_final):
@@ -15,7 +15,7 @@ def afficher_resume_final(stats_final):
         stats_final (pd.DataFrame): DataFrame avec les statistiques finales
     """
     print("\n" + "=" * 80)
-    print("📊 RÉSUMÉ DES RÉSULTATS - STATISTIQUES PMT")
+    print(f"📊 RÉSUMÉ DES RÉSULTATS - STATISTIQUES PM ({ANNEE})")
     print("=" * 80)
     
     print("🔧 LOGIQUE APPLIQUÉE :")
