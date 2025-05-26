@@ -138,6 +138,14 @@ def calculer_heures_travaillees(row):
         return 8.0
 
 
+def calculer_jours_travailles(heures):
+    """
+    Convertit les heures travaillées en fraction de jour.
+    Exemple : 6h = 6/8 = 0.75 jour
+    """
+    return heures / 8.0
+
+
 def appliquer_filtres_base(df):
     """
     Applique les filtres de base :
@@ -176,27 +184,56 @@ def appliquer_filtres_base(df):
 def calculer_statistiques_employes_nouvelles(df_filtre):
     """
     Calcule les statistiques pour chaque employé selon la nouvelle logique.
-    Tous les codes sont conservés, seules les heures travaillées changent.
+    Sépare les jours complets, partiels et absents.
     """
     # Calculer les heures travaillées pour chaque ligne
     df_filtre['Heures_Travaillees'] = df_filtre.apply(calculer_heures_travaillees, axis=1)
     
+    # Calculer les jours travaillés (en fraction)
+    df_filtre['Jours_Travailles'] = df_filtre['Heures_Travaillees'].apply(calculer_jours_travailles)
+    
+    # Identifier les jours partiels : quand il y a un code d'absence avec une valeur
+    # Cela signifie que l'employé a travaillé partiellement (8h - valeur)
+    df_filtre['Est_Jour_Partiel'] = (
+        pd.notna(df_filtre['Code']) & 
+        (df_filtre['Code'] != '') & 
+        (df_filtre['Code'] != ' ') &
+        pd.notna(df_filtre['Valeur']) & 
+        (df_filtre['Valeur'] > 0)
+    )
+    
     # Calculer les statistiques par employé
     stats = df_filtre.groupby(['Gentile', 'Equipe (Lib.)', 'Nom', 'Prénom']).agg(
-        Nb_Jours_Presents=('Jour', 'nunique'),  # Nombre de jours où l'employé était présent
-        Total_Heures_Travaillees=('Heures_Travaillees', 'sum'),  # Somme des heures travaillées
-        Nb_Jours_Complets=('Heures_Travaillees', lambda x: sum(x == 8.0)),  # Jours avec 8h complètes
-        Nb_Jours_Partiels=('Heures_Travaillees', lambda x: sum((x > 0) & (x < 8.0))),  # Jours partiels
-        Nb_Jours_Absents=('Heures_Travaillees', lambda x: sum(x == 0.0)),  # Jours d'absence complète
-        Total_Heures_Absence=('Heures_Travaillees', lambda x: sum(8.0 - x))  # Total heures d'absence
+        # Jours complets (8h exactement)
+        Nb_Jours_Complets=('Heures_Travaillees', lambda x: sum(x == 8.0)),
+        
+        # Jours partiels (heures entre 0 et 8, exclus)
+        Nb_Jours_Partiels=('Est_Jour_Partiel', 'sum'),
+        
+        # Jours absents (0h)
+        Nb_Jours_Absents=('Heures_Travaillees', lambda x: sum(x == 0.0)),
+        
+        # Jours présents = jours complets uniquement (pas les partiels)
+        Nb_Jours_Presents=('Heures_Travaillees', lambda x: sum(x == 8.0)),
+        
+        # Total jours travaillés (en fraction de jours)
+        Total_Jours_Travailles=('Jours_Travailles', 'sum'),
+        
+        # Total heures travaillées
+        Total_Heures_Travaillees=('Heures_Travaillees', 'sum'),
+        
+        # Total heures d'absence
+        Total_Heures_Absence=('Heures_Travaillees', lambda x: sum(8.0 - x))
     ).reset_index()
     
-    # Calculer le pourcentage de présence sur 365 jours
+    # Calculer le pourcentage de présence sur 365 jours (basé sur les jours complets)
     stats['Presence_Pourcentage_365j'] = (stats['Nb_Jours_Presents'] / 365 * 100).round(2)
     
-    # Calculer la moyenne d'heures par jour présent
-    stats['Moyenne_Heures_Par_Jour'] = (stats['Total_Heures_Travaillees'] / 
-                                       stats['Nb_Jours_Presents'].replace(0, 1)).round(2)
+    # Calculer la moyenne d'heures par jour présent (jours complets + partiels)
+    stats['Moyenne_Heures_Par_Jour'] = (
+        stats['Total_Heures_Travaillees'] / 
+        (stats['Nb_Jours_Presents'] + stats['Nb_Jours_Partiels']).replace(0, 1)
+    ).round(2)
     
     return stats
 
@@ -207,7 +244,9 @@ def calculer_moyennes_equipe_nouvelles(df_stats):
     """
     return df_stats.groupby('Équipe').agg(
         Nb_Employés=('Nom', 'count'),
-        Moy_Jours_Présents=('Jours_Présents', 'mean'),
+        Moy_Jours_Présents_Complets=('Jours_Présents_Complets', 'mean'),
+        Moy_Jours_Partiels=('Jours_Partiels', 'mean'),
+        Moy_Total_Jours_Travaillés=('Total_Jours_Travaillés', 'mean'),
         Moy_Total_Heures=('Total_Heures_Travaillées', 'mean'),
         Moy_Jours_Complets=('Jours_Complets', 'mean'),
         Moy_Jours_Absents=('Jours_Absents', 'mean'),
@@ -215,19 +254,6 @@ def calculer_moyennes_equipe_nouvelles(df_stats):
         Moy_Présence_365j=('Présence_%_365j', 'mean'),
         Moy_Heures_Par_Jour_Présent=('Moyenne_Heures_Par_Jour_Présent', 'mean')
     ).round(2).reset_index()
-
-
-def analyser_codes_par_employe(df_filtre):
-    """
-    Analyse détaillée des codes utilisés par employé pour diagnostic.
-    """
-    analyse_codes = df_filtre.groupby(['Gentile', 'Code']).agg(
-        Nb_Occurrences=('Jour', 'count'),
-        Heures_Totales=('Heures_Travaillees', 'sum'),
-        Valeurs_Moyennes=('Valeur', 'mean')
-    ).reset_index()
-    
-    return analyse_codes
 
 
 def analyser_horaires_disponibles(df):
@@ -287,6 +313,11 @@ def main():
     
     # Filtrage par équipe
     df_equipe = df_originel[df_originel['Equipe (Lib.)'].isin(CODES_EQUIPES)].copy()
+    
+    # Corriger le format français (virgule) vers format anglais (point) pour les décimales
+    df_equipe['Valeur'] = df_equipe['Valeur'].astype(str).str.replace(',', '.', regex=False)
+    
+    # Conversion numérique des valeurs
     df_equipe['Valeur'] = pd.to_numeric(df_equipe['Valeur'], errors='coerce')
     
     # Analyse des horaires disponibles (pour diagnostic)
@@ -306,7 +337,7 @@ def main():
     # Analyse des codes présents
     codes_uniques = df_filtre['Code'].value_counts()
     print(f"\nCodes présents dans les données filtrées :")
-    for code, count in codes_uniques.head(10).items():
+    for code, count in codes_uniques.head(10).items(): 
         print(f"  '{code}': {count} occurrences")
     
     # Calcul des statistiques avec la nouvelle logique
@@ -314,35 +345,32 @@ def main():
     
     # Formatage du DataFrame final avec UNIQUEMENT les colonnes demandées
     stats_final = stats_employes[['Nom', 'Prénom', 'Equipe (Lib.)', 
-                                 'Nb_Jours_Presents', 'Total_Heures_Travaillees', 
-                                 'Nb_Jours_Complets', 'Nb_Jours_Absents', 
-                                 'Total_Heures_Absence', 'Presence_Pourcentage_365j']].copy()
+                                 'Nb_Jours_Presents', 'Nb_Jours_Partiels', 'Total_Jours_Travailles',
+                                 'Total_Heures_Travaillees', 'Nb_Jours_Complets', 
+                                 'Nb_Jours_Absents', 'Total_Heures_Absence', 
+                                 'Presence_Pourcentage_365j']].copy()
     
     # Calculer la moyenne d'heures de présence par jour OÙ L'EMPLOYÉ ÉTAIT PRÉSENT
-    # (Total heures travaillées / Nombre de jours présents)
+    # (Total heures travaillées / (Jours présents + Jours partiels))
     stats_final['Moyenne_Heures_Par_Jour_Present'] = (
         stats_final['Total_Heures_Travaillees'] / 
-        stats_final['Nb_Jours_Presents'].replace(0, 1)  # Éviter division par 0
+        (stats_final['Nb_Jours_Presents'] + stats_final['Nb_Jours_Partiels']).replace(0, 1)
     ).round(2)
     
     # Renommage des colonnes selon vos spécifications exactes
-    stats_final.columns = ['Nom', 'Prénom', 'Équipe', 'Jours_Présents', 
-                          'Total_Heures_Travaillées', 'Jours_Complets', 
-                          'Jours_Absents', 'Total_Heures_Absence', 'Présence_%_365j',
-                          'Moyenne_Heures_Par_Jour_Présent']
+    stats_final.columns = ['Nom', 'Prénom', 'Équipe', 'Jours_Présents_Complets', 
+                          'Jours_Partiels', 'Total_Jours_Travaillés', 'Total_Heures_Travaillées', 
+                          'Jours_Complets', 'Jours_Absents', 'Total_Heures_Absence', 
+                          'Présence_%_365j', 'Moyenne_Heures_Par_Jour_Présent']
     
     # Calcul des moyennes par équipe
     moyennes_equipe = calculer_moyennes_equipe_nouvelles(stats_final)
-    
-    # Analyse détaillée des codes
-    analyse_codes = analyser_codes_par_employe(df_filtre)
     
     # Sauvegarde
     print(f"\nSauvegarde dans {FICHIER_EXCEL}...")
     with pd.ExcelWriter(FICHIER_EXCEL, engine='openpyxl') as writer:
         stats_final.to_excel(writer, sheet_name='Statistiques_Employés', index=False)
         moyennes_equipe.to_excel(writer, sheet_name='Moyennes_par_Équipe', index=False)
-        analyse_codes.to_excel(writer, sheet_name='Analyse_Codes', index=False)
     
     # Affichage du résumé
     print("\n" + "=" * 70)
@@ -354,7 +382,9 @@ def main():
     print("- Code sans valeur : 0h travaillées (8h d'absence)")
     print(f"- Filtrage horaires : {HORAIRE_DEBUT_REFERENCE} à {HORAIRE_FIN_REFERENCE}")
     print(f"\nNombre d'employés analysés: {len(stats_final)}")
-    print(f"Moyenne jours présents par employé: {stats_final['Jours_Présents'].mean():.1f} jours")
+    print(f"Moyenne jours présents par employé: {stats_final['Jours_Présents_Complets'].mean():.1f} jours")
+    print(f"Moyenne jours partiels par employé: {stats_final['Jours_Partiels'].mean():.1f} jours")
+    print(f"Moyenne total jours travaillés par employé: {stats_final['Total_Jours_Travaillés'].mean():.1f} jours")
     print(f"Moyenne heures totales par employé: {stats_final['Total_Heures_Travaillées'].mean():.1f} heures")
     print(f"Moyenne jours complets (8h) par employé: {stats_final['Jours_Complets'].mean():.1f} jours")
     print(f"Moyenne jours absents par employé: {stats_final['Jours_Absents'].mean():.1f} jours")
