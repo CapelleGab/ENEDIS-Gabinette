@@ -58,3 +58,6 @@ output/
 # Tests
 test_*.py
 *_test.py
+
+# Todo
+todo.md
