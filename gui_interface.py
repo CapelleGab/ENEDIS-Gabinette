@@ -1,5 +1,5 @@
 """
-Interface graphique tkinter pour l'analyse des statistiques PMT.
+Interface graphique tkinter pour PMT Analytics.
 Affiche les résultats directement dans l'interface.
 
 author : CAPELLE Gabin
@@ -14,23 +14,58 @@ from pathlib import Path
 import pandas as pd
 
 # Import des fonctions du script principal
-from utils import (
-    charger_donnees_csv,
-    preparer_donnees,
-    supprimer_doublons,
-    appliquer_filtres_base,
-    calculer_statistiques_employes,
-    calculer_moyennes_equipe,
-    formater_donnees_finales,
-    analyser_codes_presence,
-    sauvegarder_excel,
-    afficher_resume_final
-)
-import config
+# Gestion spéciale pour les exécutables PyInstaller
+try:
+    from utils import (
+        charger_donnees_csv,
+        preparer_donnees,
+        supprimer_doublons,
+        appliquer_filtres_base,
+        calculer_statistiques_employes,
+        calculer_moyennes_equipe,
+        formater_donnees_finales,
+        analyser_codes_presence,
+        sauvegarder_excel,
+        afficher_resume_final
+    )
+    import config
+except ImportError as e:
+    # Si l'import échoue, essayer les imports directs (pour PyInstaller)
+    print(f"Import utils échoué, tentative d'imports directs: {e}")
+    try:
+        from utils.data_loader import charger_donnees_csv, preparer_donnees, supprimer_doublons
+        from utils.filtres import appliquer_filtres_base
+        from utils.calculateurs import calculer_statistiques_employes, calculer_moyennes_equipe
+        from utils.formatters import formater_donnees_finales, analyser_codes_presence
+        from utils.excel_writer import sauvegarder_excel
+        from utils.reporter import afficher_resume_final
+        import config
+        print("✅ Imports directs réussis")
+    except ImportError as e2:
+        print(f"❌ Tous les imports ont échoué: {e2}")
+        # Dernière tentative avec sys.path
+        import sys
+        import os
+        if hasattr(sys, '_MEIPASS'):
+            # Nous sommes dans un exécutable PyInstaller
+            sys.path.insert(0, os.path.join(sys._MEIPASS, 'utils'))
+            sys.path.insert(0, sys._MEIPASS)
+        try:
+            from utils.data_loader import charger_donnees_csv, preparer_donnees, supprimer_doublons
+            from utils.filtres import appliquer_filtres_base
+            from utils.calculateurs import calculer_statistiques_employes, calculer_moyennes_equipe
+            from utils.formatters import formater_donnees_finales, analyser_codes_presence
+            from utils.excel_writer import sauvegarder_excel
+            from utils.reporter import afficher_resume_final
+            import config
+            print("✅ Imports PyInstaller réussis")
+        except ImportError as e3:
+            print(f"❌ Import final échoué: {e3}")
+            raise
 
 
-class StatistiquesPMTInterface:
-    """Interface graphique complète pour l'analyse des statistiques PMT."""
+class PMTAnalyticsInterface:
+    """Interface graphique complète pour PMT Analytics."""
     
     def __init__(self, root):
         self.root = root
@@ -42,7 +77,7 @@ class StatistiquesPMTInterface:
     def setup_ui(self):
         """Configure l'interface utilisateur."""
         # Configuration de la fenêtre principale
-        self.root.title("📊 Statistiques PMT - Analyse des Plannings")
+        self.root.title("📊 PMT Analytics - Analyse des Plannings")
         self.root.geometry("900x700")
         self.root.resizable(True, True)
         
@@ -61,7 +96,7 @@ class StatistiquesPMTInterface:
         # Titre
         title_label = ttk.Label(
             main_frame, 
-            text="📊 Analyse des Statistiques PMT",
+            text="📊 PMT Analytics",
             font=('Arial', 16, 'bold')
         )
         title_label.grid(row=0, column=0, pady=(0, 10), sticky=tk.W+tk.E)
@@ -179,14 +214,12 @@ class StatistiquesPMTInterface:
         """Traite les données PMT (exécuté dans un thread séparé)."""
         try:
             # Mise à jour du chemin du fichier CSV dans la config
-            config.FICHIER_CSV = self.csv_file_path
+            import os
+            absolute_path = os.path.abspath(self.csv_file_path)
+            config.FICHIER_CSV = absolute_path
             
             self.log_message("🔄 Chargement des données CSV...")
-            df_originel = charger_donnees_csv()
-            if df_originel is None:
-                self.on_error("❌ Erreur lors du chargement du fichier CSV")
-                return
-            
+            df_originel = charger_donnees_csv(config.FICHIER_CSV)
             self.log_message(f"✅ {len(df_originel)} lignes chargées")
             
             self.log_message("🔄 Préparation des données...")
@@ -219,7 +252,7 @@ class StatistiquesPMTInterface:
             self.on_success()
             
         except Exception as e:
-            error_msg = f"❌ Erreur lors du traitement :\n{str(e)}\n\n{traceback.format_exc()}"
+            error_msg = f"❌ Erreur lors du traitement :\n{str(e)}"
             self.on_error(error_msg)
     
     def on_success(self):
@@ -243,7 +276,7 @@ class StatistiquesPMTInterface:
             f"✅ Analyse terminée avec succès !\n\n"
             f"• {len(self.stats_final)} employés analysés\n"
             f"• {len(self.moyennes_equipe)} équipes traitées\n\n"
-            f"Consultez le journal pour voir le résumé détaillé."
+            f"💾 Utilisez 'Exporter vers Excel' pour sauvegarder les résultats"
         )
     
     def display_summary_in_log(self):
@@ -324,19 +357,105 @@ class StatistiquesPMTInterface:
         self.log_message("="*60)
     
     def export_to_excel(self):
-        """Exporte les résultats vers Excel."""
+        """Exporte les résultats vers Excel avec choix du dossier de destination."""
         if self.stats_final is None or self.moyennes_equipe is None:
             messagebox.showerror("Erreur", "Aucune donnée à exporter.")
             return
         
         try:
-            sauvegarder_excel(self.stats_final, self.moyennes_equipe)
+            # Proposer un nom de fichier par défaut basé sur la date
+            import datetime
+            date_str = datetime.datetime.now().strftime("%Y%m%d_%H%M")
+            default_filename = f"Statistiques_PMT_{date_str}.xlsx"
+            
+            # Proposer le dossier Documents par défaut (plus sûr sur macOS)
+            import os
+            home_dir = os.path.expanduser("~")
+            documents_dir = os.path.join(home_dir, "Documents")
+            if not os.path.exists(documents_dir):
+                documents_dir = home_dir  # Fallback vers le dossier utilisateur
+            
+            # Ouvrir la boîte de dialogue pour choisir l'emplacement et le nom
+            file_path = filedialog.asksaveasfilename(
+                title="Enregistrer le fichier Excel",
+                defaultextension=".xlsx",
+                filetypes=[
+                    ("Fichiers Excel", "*.xlsx"),
+                    ("Tous les fichiers", "*.*")
+                ],
+                initialfile=default_filename,
+                initialdir=documents_dir
+            )
+            
+            if not file_path:
+                # L'utilisateur a annulé
+                return
+            
+            # Vérifier les permissions d'écriture avant de tenter l'export
+            directory = os.path.dirname(file_path)
+            if not os.access(directory, os.W_OK):
+                messagebox.showerror(
+                    "Erreur de permissions", 
+                    f"❌ Impossible d'écrire dans le répertoire :\n{directory}\n\n"
+                    "💡 Essayez de sauvegarder dans :\n"
+                    "• Votre dossier Documents\n"
+                    "• Votre Bureau\n"
+                    "• Un dossier où vous avez les droits d'écriture"
+                )
+                return
+            
+            # Si le fichier existe déjà, vérifier qu'il n'est pas ouvert
+            if os.path.exists(file_path):
+                try:
+                    # Tenter d'ouvrir le fichier en mode écriture pour vérifier qu'il n'est pas verrouillé
+                    with open(file_path, 'a'):
+                        pass
+                except PermissionError:
+                    messagebox.showerror(
+                        "Fichier verrouillé", 
+                        f"❌ Le fichier est ouvert dans une autre application :\n{file_path}\n\n"
+                        "💡 Fermez le fichier Excel et réessayez, ou choisissez un autre nom."
+                    )
+                    return
+            
+            # Exporter vers le fichier choisi (passer directement le chemin)
+            sauvegarder_excel(self.stats_final, self.moyennes_equipe, file_path)
+            
+            # Message de succès avec le chemin complet
             messagebox.showinfo(
                 "Export réussi",
                 f"✅ Fichier Excel exporté avec succès !\n\n"
-                f"Fichier : {config.FICHIER_EXCEL}"
+                f"📁 Emplacement : {file_path}\n"
+                f"📊 Contenu : {len(self.stats_final)} employés, {len(self.moyennes_equipe)} équipes"
             )
+            
+            # Log dans l'interface
+            self.log_message(f"💾 Export Excel réussi : {file_path}")
+            
+        except PermissionError as e:
+            self.log_message(f"❌ Erreur de permissions : {str(e)}")
+            messagebox.showerror(
+                "Erreur de permissions", 
+                f"❌ Erreur de permissions lors de l'export :\n{str(e)}\n\n"
+                "💡 Essayez de sauvegarder dans :\n"
+                "• Votre dossier Documents\n"
+                "• Votre Bureau\n"
+                "• Un dossier où vous avez les droits d'écriture"
+            )
+            
+        except OSError as e:
+            self.log_message(f"❌ Erreur système : {str(e)}")
+            if e.errno == 30:  # Read-only file system
+                messagebox.showerror(
+                    "Système de fichiers en lecture seule",
+                    f"❌ Système de fichiers en lecture seule :\n{str(e)}\n\n"
+                    "💡 Essayez de sauvegarder dans un autre emplacement."
+                )
+            else:
+                messagebox.showerror("Erreur système", f"❌ Erreur système lors de l'export :\n{str(e)}")
+            
         except Exception as e:
+            self.log_message(f"❌ Erreur d'export : {str(e)}")
             messagebox.showerror("Erreur d'export", f"❌ Erreur lors de l'export :\n{str(e)}")
     
     def on_error(self, error_message):
@@ -374,7 +493,7 @@ class StatistiquesPMTInterface:
     
     def show_help(self):
         """Affiche l'aide de l'application."""
-        help_text = """📊 Aide - Statistiques PMT
+        help_text = """📊 Aide - PMT Analytics
 
 🎯 OBJECTIF :
 Cette application analyse les fichiers CSV de planning journalier Enedis 
@@ -387,8 +506,10 @@ et affiche un résumé détaillé des statistiques.
 4. Consultez le résumé affiché dans le journal d'exécution
 
 💾 EXPORT :
-• Utilisez le bouton "💾 Exporter vers Excel" pour sauvegarder les résultats
+• "💾 Exporter vers Excel" : Choisissez l'emplacement et le nom du fichier
+• "⚡ Export rapide" : Export automatique vers un emplacement sûr (Documents)
 • Le fichier Excel contiendra tous les détails par employé et par équipe
+• En cas d'erreur de permissions, l'export de secours sera proposé automatiquement
 
 📊 RÉSUMÉ AFFICHÉ :
 • Statistiques générales (nombre d'employés, moyennes, etc.)
@@ -408,7 +529,7 @@ Auteur : CAPELLE Gabin"""
 def main():
     """Point d'entrée principal de l'application."""
     root = tk.Tk()
-    app = StatistiquesPMTInterface(root)
+    app = PMTAnalyticsInterface(root)
     
     # Centrer la fenêtre
     root.update_idletasks()

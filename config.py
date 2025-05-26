@@ -1,5 +1,5 @@
 """
-Configuration du projet Statistiques PMT
+Configuration du projet PMT Analytics
 Centralise tous les paramètres et constantes du projet.
 
 author : CAPELLE Gabin
