@@ -233,13 +233,17 @@ Pour contribuer au projet :
 
 ## 📄 Licence
 
-Ce projet est destiné à un usage interne pour l'analyse des données PMT.
+Ce projet est sous licence propriétaire Enedis. Voir le fichier [LICENSE](LICENSE) pour plus de détails.
+
+**Usage autorisé** : Exclusivement pour les besoins internes d'Enedis  
+**Confidentialité** : Ce projet contient des données et processus métier confidentiels  
+**Restrictions** : Toute distribution ou utilisation externe est interdite
 
 ---
 
 **Auteur** : Développé pour l'analyse des statistiques PMT Enedis  
 **Version** : 1.1  
-**Dernière mise à jour** : Décembre 2024
+**Dernière mise à jour** : MAI 2025
 
 ### Historique des versions
 
