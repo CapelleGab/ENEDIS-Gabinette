@@ -59,22 +59,6 @@ StatistiquePMT/
 └── README.md                  # Ce fichier
 ```
 
-## 🔧 Configuration
-
-### Paramètres modifiables dans `main.py` :
-
-```python
-# Année à traiter
-ANNEE = '2024'
-
-# Équipes à analyser
-CODES_EQUIPES = ['PV IT ASTREINTE', 'PV B ASTREINTE', 'PV G ASTREINTE', 'PV PE ASTREINTE']
-
-# Horaires de référence pour le filtrage
-HORAIRE_DEBUT_REFERENCE = '07:30:00'
-HORAIRE_FIN_REFERENCE = '16:15:00'
-```
-
 ## 🏃‍♂️ Utilisation
 
 ### Nouvelle architecture (recommandée)
@@ -91,7 +75,7 @@ HORAIRE_FIN_REFERENCE = '16:15:00'
 
 ### Configuration
 
-Modifiez le fichier `config.py` dans le dossier `utils` pour ajuster les paramètres :
+Modifiez le fichier `config.py` pour ajuster les paramètres :
 
 ```python
 ANNEE = '2024'
