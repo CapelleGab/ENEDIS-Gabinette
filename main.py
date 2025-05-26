@@ -2,6 +2,8 @@
 Analyse des statistiques PMT (Planning de Maintenance Technique)
 Ce script traite les données de planning journalier pour calculer les statistiques
 de présence et d'heures travaillées par employé et par équipe.
+
+author : CAPELLE Gabin
 """
 
 import pandas as pd
