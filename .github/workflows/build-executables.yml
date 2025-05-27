@@ -2,7 +2,7 @@ name: Build PMT Analytics Executables
 
 # Déclencheurs optimisés pour économiser les minutes
 on:
-  # Compilation automatique sur les tags de release
+  # Compilation automatique UNIQUEMENT sur les tags de release
   push:
     tags:
       - "v*"
@@ -46,9 +46,9 @@ jobs:
             artifact_name: PMTAnalytics-macOS
             executable_path: dist/PMTAnalytics.app
 
-    # Conditions pour économiser les minutes
+    # Conditions pour le déclenchement manuel
     if: |
-      (github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')) ||
+      github.event_name == 'push' ||
       (github.event_name == 'workflow_dispatch' && 
        ((matrix.platform == 'windows' && github.event.inputs.build_windows == 'true') ||
         (matrix.platform == 'macos' && github.event.inputs.build_macos == 'true')))
