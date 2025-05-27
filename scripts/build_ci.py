@@ -31,9 +31,9 @@ def install_dependencies():
     # Installer PyInstaller
     try:
         subprocess.check_call([sys.executable, "-m", "pip", "install", "pyinstaller"])
-        print("✅ PyInstaller installé")
+        print("[OK] PyInstaller installé")
     except subprocess.CalledProcessError as e:
-        print(f"❌ Erreur installation PyInstaller : {e}")
+        print(f"[ERROR] Erreur installation PyInstaller : {e}")
         return False
     
     return True
@@ -43,7 +43,7 @@ def get_icon_path():
     ico_path = "assets/pmtIcon.ico"
     
     if os.path.exists(ico_path):
-        print(f"✅ Icône trouvée : {ico_path}")
+        print(f"[OK] Icône trouvée : {ico_path}")
         return ico_path
     else:
         print("⚠️ Fichier d'icône non trouvé, création sans icône")
@@ -163,7 +163,7 @@ app = BUNDLE(
     with open('PMTAnalytics_macOS.spec', 'w', encoding='utf-8') as f:
         f.write(spec_content)
     
-    print("✅ Fichier .spec macOS créé")
+    print("[OK] Fichier .spec macOS créé")
     return 'PMTAnalytics_macOS.spec'
 
 def create_spec_file_windows(icon_path=None):
@@ -263,12 +263,12 @@ exe = EXE(
     with open('PMTAnalytics_Windows.spec', 'w', encoding='utf-8') as f:
         f.write(spec_content)
     
-    print("✅ Fichier .spec Windows créé")
+    print("[OK] Fichier .spec Windows créé")
     return 'PMTAnalytics_Windows.spec'
 
 def build_executable(platform_type, spec_file):
     """Construit l'exécutable avec PyInstaller."""
-    print(f"🔨 Construction de l'exécutable {platform_type}...")
+    print(f"[BUILD] Construction de l'exécutable {platform_type}...")
     
     try:
         # Nettoyer les anciens builds
@@ -276,24 +276,24 @@ def build_executable(platform_type, spec_file):
             if os.path.exists(folder):
                 import shutil
                 shutil.rmtree(folder)
-                print(f"🧹 Dossier {folder} nettoyé")
+                print(f"[CLEAN] Dossier {folder} nettoyé")
         
         # Construire avec le fichier .spec
         cmd = [sys.executable, "-m", "PyInstaller", "--clean", spec_file]
         
-        print(f"🚀 Lancement de PyInstaller...")
+        print(f"[PYINSTALLER] Lancement de PyInstaller...")
         result = subprocess.run(cmd, capture_output=True, text=True)
         
         if result.returncode == 0:
-            print(f"✅ Exécutable {platform_type} créé avec succès !")
+            print(f"[SUCCESS] Exécutable {platform_type} créé avec succès !")
             return True
         else:
-            print(f"❌ Erreur lors de la construction :")
+            print(f"[ERROR] Erreur lors de la construction :")
             print(result.stderr)
             return False
             
     except Exception as e:
-        print(f"❌ Erreur inattendue : {e}")
+        print(f"[ERROR] Erreur inattendue : {e}")
         return False
 
 def get_folder_size(folder_path):
@@ -312,32 +312,32 @@ def verify_build(platform_type):
         exe_path = Path("dist/PMTAnalytics.app")
         if exe_path.exists():
             size_mb = get_folder_size(exe_path)
-            print(f"📁 Application créée : {exe_path}")
-            print(f"📏 Taille : {size_mb:.1f} MB")
+            print(f"[INFO] Application créée : {exe_path}")
+            print(f"[INFO] Taille : {size_mb:.1f} MB")
             return True
     elif platform_type == 'windows':
         exe_path = Path("dist/PMTAnalytics.exe")
         if exe_path.exists():
             size_mb = exe_path.stat().st_size / (1024 * 1024)
-            print(f"📁 Exécutable créé : {exe_path}")
-            print(f"📏 Taille : {size_mb:.1f} MB")
+            print(f"[INFO] Exécutable créé : {exe_path}")
+            print(f"[INFO] Taille : {size_mb:.1f} MB")
             return True
     
-    print(f"❌ Exécutable {platform_type} non trouvé")
+    print(f"[ERROR] Exécutable {platform_type} non trouvé")
     return False
 
 def main():
     """Fonction principale."""
     current_platform = detect_platform()
     
-    print("🚀 BUILD AUTOMATISÉ PMT ANALYTICS")
+    print("[START] BUILD AUTOMATISE PMT ANALYTICS")
     print("=" * 50)
     print(f"Plateforme détectée : {current_platform}")
     print()
     
     # Vérifier qu'on est dans le bon répertoire
     if not os.path.exists('gui_interface.py'):
-        print("❌ Erreur : gui_interface.py non trouvé")
+        print("[ERROR] Erreur : gui_interface.py non trouvé")
         return False
     
     # Installer les dépendances
@@ -345,26 +345,26 @@ def main():
         return False
     
     # Récupérer l'icône
-    print("🎨 Vérification de l'icône...")
+    print("[ICON] Vérification de l'icône...")
     icon_path = get_icon_path()
     
     # Créer le fichier .spec selon la plateforme
-    print("⚙️ Création de la configuration...")
+    print("[CONFIG] Création de la configuration...")
     if current_platform == 'macos':
         spec_file = create_spec_file_macos(icon_path)
     elif current_platform == 'windows':
         spec_file = create_spec_file_windows(icon_path)
     else:
-        print(f"❌ Plateforme {current_platform} non supportée")
+        print(f"[ERROR] Plateforme {current_platform} non supportée")
         return False
     
     # Construire l'exécutable
     if build_executable(current_platform, spec_file):
         if verify_build(current_platform):
-            print(f"\n🎉 BUILD {current_platform.upper()} RÉUSSI !")
+            print(f"\n[SUCCESS] BUILD {current_platform.upper()} REUSSI !")
             return True
     
-    print(f"\n❌ BUILD {current_platform.upper()} ÉCHOUÉ")
+    print(f"\n[ERROR] BUILD {current_platform.upper()} ECHOUE")
     return False
 
 if __name__ == "__main__":
@@ -372,7 +372,7 @@ if __name__ == "__main__":
         success = main()
         sys.exit(0 if success else 1)
     except Exception as e:
-        print(f"\n❌ Erreur inattendue : {e}")
+        print(f"\n[ERROR] Erreur inattendue : {e}")
         import traceback
         traceback.print_exc()
         sys.exit(1) 
