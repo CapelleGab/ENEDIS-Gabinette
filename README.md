@@ -11,7 +11,7 @@
 - 📈 **Analyse automatique** des fichiers CSV de planning journalier
 - 📊 **Statistiques détaillées** par employé et par équipe
 - 💾 **Export Excel** avec tableaux formatés et graphiques
-- 🖥️ **Interface graphique** intuitive et moderne
+- 🖥️ **Interface graphique** intuitive
 - 🔍 **Résumé visuel** des résultats en temps réel
 
 ### 🏢 Équipes supportées
