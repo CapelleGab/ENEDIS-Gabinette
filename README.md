@@ -32,21 +32,23 @@ python -m venv .venv && source .venv/bin/activate
 pip install -r requirements.txt
 
 # Lancement
-python gui_interface.py
+python main.py
 
 # Build local
-python scripts/build_ci.py
+python src/scripts/build_ci.py
 ```
 
 ## 📋 Structure
 
 ```
 StatistiquePMT/
-├── gui_interface.py    # Interface principale
-├── utils/              # Modules métier
-├── scripts/            # Build automatisé
-├── assets/             # Ressources
-└── config.py          # Configuration
+├── main.py             # Point d'entrée principal
+├── src/                # Code source
+│   ├── gui/            # Interface graphique modulaire
+│   ├── utils/          # Modules métier
+│   └── scripts/        # Build automatisé
+├── assets/             # Ressources (icônes)
+└── config.py          # Configuration globale
 ```
 
 ## 🔧 Configuration

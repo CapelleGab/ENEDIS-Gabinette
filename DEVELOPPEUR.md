@@ -8,17 +8,21 @@
 
 ```
 StatistiquePMT/
-├── gui_interface.py        # Interface principale
-├── main.py                 # Point d'entrée
-├── config.py              # Configuration globale
-├── utils/                 # Modules métier
-│   ├── data_loader.py     # Chargement CSV
-│   ├── calculateurs.py    # Calculs statistiques
-│   ├── excel_writer.py    # Export Excel
-│   ├── filtres.py         # Filtrage données
-│   └── formatters.py      # Formatage résultats
-├── scripts/               # Build et CI/CD
-│   └── build_ci.py        # Build automatisé
+├── main.py                # Point d'entrée principal
+├── src/                   # Code source
+│   ├── gui/               # Interface graphique modulaire
+│   │   ├── interface.py   # Interface utilisateur
+│   │   ├── processing.py  # Traitement des données
+│   │   ├── export.py      # Gestion export Excel
+│   │   └── helpers.py     # Fonctions utilitaires
+│   ├── utils/             # Modules métier
+│   │   ├── data_loader.py # Chargement CSV
+│   │   ├── calculateurs.py # Calculs statistiques
+│   │   ├── excel_writer.py # Export Excel
+│   │   ├── filtres.py     # Filtrage données
+│   │   └── formatters.py  # Formatage résultats
+│   └── scripts/           # Build et CI/CD
+│       └── build_ci.py    # Build automatisé
 ├── assets/                # Ressources
 │   └── pmtIcon.ico        # Icône application
 └── .github/workflows/     # GitHub Actions
@@ -40,8 +44,8 @@ source .venv/bin/activate  # Linux/macOS
 # Dépendances
 pip install -r requirements.txt
 
-# Lancement
-python gui_interface.py
+# Lancement interface graphique
+python main.py
 ```
 
 ## 📦 Dépendances
@@ -90,7 +94,7 @@ CSV → data_loader → filtres → calculateurs → formatters → excel_writer
 
 ```bash
 # Build pour la plateforme actuelle
-python scripts/build_ci.py
+python src/scripts/build_ci.py
 
 # Résultat dans dist/
 # macOS: PMTAnalytics.app
