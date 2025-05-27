@@ -46,9 +46,9 @@ jobs:
             artifact_name: PMTAnalytics-macOS
             executable_path: dist/PMTAnalytics.app
 
-    # Conditions pour le déclenchement manuel
+    # Conditions pour le déclenchement manuel seulement
     if: |
-      github.event_name == 'push' ||
+      (github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')) ||
       (github.event_name == 'workflow_dispatch' && 
        ((matrix.platform == 'windows' && github.event.inputs.build_windows == 'true') ||
         (matrix.platform == 'macos' && github.event.inputs.build_macos == 'true')))
@@ -149,7 +149,7 @@ jobs:
         with:
           path: artifacts/
 
-            - name: 📦 Prepare release assets
+      - name: 📦 Prepare release assets
         run: |
           mkdir -p release-assets
           cd artifacts
