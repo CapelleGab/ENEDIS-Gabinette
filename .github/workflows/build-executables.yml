@@ -70,7 +70,7 @@ jobs:
         run: |
           python --version
           pip list
-          ls -la
+        shell: bash
 
       # 5. Build de l'exécutable
       - name: 🔨 Build executable
