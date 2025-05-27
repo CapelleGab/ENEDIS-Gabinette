@@ -1,6 +1,6 @@
-# 🎉 PMT Analytics v1.0.0
+# 🎉 PMT Analytics v1.1.0
 
-**Application d'analyse des plannings PMT d'Enedis** - Interface graphique moderne pour traiter automatiquement les fichiers CSV de planning journalier.
+**Application d'analyse des plannings PMT d'Enedis** - Interface graphique moderne pour traiter automatiquement les fichiers CSV de planning journalier avec support des équipes d'astreinte et PIT.
 
 ## 📦 Téléchargements
 
@@ -10,9 +10,10 @@
 ## ✨ Fonctionnalités
 
 - 📊 **Analyse automatique** des fichiers CSV de planning journalier
-- 📈 **Statistiques détaillées** par employé et équipe
-- 💾 **Export Excel** formaté avec graphiques
+- 📈 **Statistiques détaillées** par employé et équipe (astreinte + PIT)
+- 💾 **Export Excel** formaté avec 4 feuilles (astreinte + PIT)
 - 🖥️ **Interface graphique** moderne et intuitive
+- 🔧 **Support équipes PIT** (hors astreinte) en parallèle
 - 🚀 **Build automatisé** via GitHub Actions
 
 ## 🚀 Utilisation rapide
@@ -20,6 +21,9 @@
 1. **Téléchargez** l'application pour votre OS
 2. **Lancez** l'exécutable
 3. **Sélectionnez** votre fichier CSV de planning
+   - Format attendu : `Planning_journalier_YYYY.csv`
+   - Encodage : Latin1 (ISO-8859-1)
+   - Séparateur : Point-virgule (;)
 4. **Analysez** et exportez vers Excel
 
 ## 🛠️ Développement
@@ -53,21 +57,25 @@ StatistiquePMT/
 
 ## 🔧 Configuration
 
-Équipes analysées par défaut :
+**Équipes d'astreinte (4) :**
 
-- PV IT ASTREINTE
-- PV B ASTREINTE
-- PV G ASTREINTE
-- PV PE ASTREINTE
+- PV IT ASTREINTE, PV B ASTREINTE, PV G ASTREINTE, PV PE ASTREINTE
 
-Modifiez `config.py` pour personnaliser.
+**Équipes PIT - Hors astreinte (6) :**
+
+- PV B SANS ASTREINTE, PV B TERRAIN, PV IT SANS ASTREINTE
+- PF IT TERRAIN, PV G SANS ASTREINTE, PV PE SANS ASTREINTE
+
+Modifiez `config.py` pour personnaliser les équipes analysées.
 
 ## 📊 Export Excel
 
-Génère automatiquement :
+Génère automatiquement **4 feuilles** :
 
-- **Feuille 1** : Statistiques par employé
-- **Feuille 2** : Moyennes par équipe
+- **ASTREINTE_STATS** : Statistiques par employé (astreinte)
+- **ASTREINTE_EQUIPE_MOYENNES** : Moyennes par équipe (astreinte)
+- **PIT_STATS** : Statistiques par employé (hors astreinte)
+- **PIT_EQUIPE_MOYENNES** : Moyennes par équipe (hors astreinte)
 
 ## 🤝 Contribution
 
@@ -90,7 +98,7 @@ Génère automatiquement :
 ---
 
 **Développé par** : CAPELLE Gabin - Enedis  
-**Version** : v1.0.0  
+**Version** : v1.1.0  
 **Dernière mise à jour** : Mai 2025  
 **Usage** : Interne Enedis uniquement  
 **Repository** : https://github.com/CapelleGab/ENEDIS-charge-pmt.git

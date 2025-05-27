@@ -2,7 +2,7 @@
 
 ## 📋 Vue d'ensemble
 
-**PMT Analytics** est une application Python avec interface Tkinter pour l'analyse des plannings PMT d'Enedis. Architecture modulaire avec build automatisé via GitHub Actions.
+**PMT Analytics** est une application Python avec interface Tkinter pour l'analyse des plannings PMT d'Enedis. Architecture modulaire avec support des équipes d'astreinte et PIT, build automatisé via GitHub Actions.
 
 ## 🏗️ Architecture
 
@@ -63,7 +63,8 @@ python main.py
 
 ```python
 ANNEE = '2025'
-CODES_EQUIPES = ['PV IT ASTREINTE', 'PV B ASTREINTE', ...]
+CODES_EQUIPES_ASTREINTE = ['PV IT ASTREINTE', 'PV B ASTREINTE', ...]
+CODES_EQUIPES_HORS_ASTREINTE = ['PV B SANS ASTREINTE', 'PV B TERRAIN', ...]
 HORAIRE_DEBUT_REFERENCE = '07:30:00'
 CSV_ENCODING = 'latin1'
 ```
@@ -71,9 +72,16 @@ CSV_ENCODING = 'latin1'
 ### Personnalisation équipes
 
 ```python
-CODES_EQUIPES = [
-    'NOUVELLE_EQUIPE',
-    'AUTRE_EQUIPE'
+# Équipes d'astreinte
+CODES_EQUIPES_ASTREINTE = [
+    'NOUVELLE_EQUIPE_ASTREINTE',
+    'AUTRE_EQUIPE_ASTREINTE'
+]
+
+# Équipes PIT (hors astreinte)
+CODES_EQUIPES_HORS_ASTREINTE = [
+    'NOUVELLE_EQUIPE_PIT',
+    'AUTRE_EQUIPE_PIT'
 ]
 ```
 
@@ -81,12 +89,15 @@ CODES_EQUIPES = [
 
 ```
 CSV → data_loader → filtres → calculateurs → formatters → excel_writer
+                 ↓
+            [Astreinte + PIT en parallèle]
 ```
 
 1. **Chargement** : `data_loader.charger_donnees_csv()`
 2. **Filtrage** : `filtres.appliquer_filtres_base()`
-3. **Calculs** : `calculateurs.calculer_statistiques_employes()`
-4. **Export** : `excel_writer.sauvegarder_excel()`
+3. **Séparation** : `preparer_donnees()` + `preparer_donnees_pit()`
+4. **Calculs** : `calculateurs.calculer_statistiques_employes()` (x2)
+5. **Export** : `excel_writer.sauvegarder_excel()` (4 feuilles)
 
 ## 🏗️ Build et déploiement
 
@@ -229,7 +240,7 @@ git commit -m "📚 Docs: Mise à jour README"
 
 ---
 
-**Version** : v1.0.0  
+**Version** : v1.1.0  
 **Dernière mise à jour** : Mai 2025  
 **Auteur** : CAPELLE Gabin - Enedis  
 **License** : Usage interne Enedis uniquement

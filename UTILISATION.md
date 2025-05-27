@@ -2,7 +2,7 @@
 
 ## 🎯 Présentation
 
-**PMT Analytics** analyse automatiquement les fichiers CSV de planning journalier Enedis et génère des statistiques détaillées sur la présence et les heures travaillées des employés.
+**PMT Analytics** analyse automatiquement les fichiers CSV de planning journalier Enedis et génère des statistiques détaillées sur la présence et les heures travaillées des employés pour les équipes d'astreinte et PIT (hors astreinte).
 
 ## 🚀 Installation
 
@@ -45,14 +45,22 @@
 
 ### Affichage dans l'app
 
+**Équipes d'astreinte :**
+
 - 📈 Statistiques générales
 - 🏆 Top 5 employés par heures
 - 🏢 Meilleure équipe
 - 📋 Répartition par équipe
 
-### Fichier Excel (2 feuilles)
+**Équipes PIT (hors astreinte) :**
 
-**Feuille 1 - Statistiques Employés :**
+- 📈 Statistiques générales PIT
+- 🏆 Top 3 employés PIT par heures
+- 📋 Répartition par équipe PIT
+
+### Fichier Excel (4 feuilles)
+
+**ASTREINTE_STATS - Statistiques Employés (astreinte) :**
 
 - Nom, Prénom, Équipe
 - Jours présents/absents
@@ -60,18 +68,33 @@
 - Taux de présence
 - Moyenne heures/jour
 
-**Feuille 2 - Moyennes par Équipe :**
+**ASTREINTE_EQUIPE_MOYENNES - Moyennes par Équipe (astreinte) :**
 
 - Stats moyennes par équipe
 - Nombre d'employés
 - Comparaisons
 
+**PIT_STATS - Statistiques Employés (hors astreinte) :**
+
+- Mêmes colonnes que pour l'astreinte
+- Équipes PIT uniquement
+
+**PIT_EQUIPE_MOYENNES - Moyennes par Équipe (hors astreinte) :**
+
+- Stats moyennes par équipe PIT
+- Nombre d'employés PIT
+- Comparaisons PIT
+
 ## ⚙️ Équipes analysées
 
-- PV IT ASTREINTE
-- PV B ASTREINTE
-- PV G ASTREINTE
-- PV PE ASTREINTE
+**Équipes d'astreinte (4) :**
+
+- PV IT ASTREINTE, PV B ASTREINTE, PV G ASTREINTE, PV PE ASTREINTE
+
+**Équipes PIT - Hors astreinte (6) :**
+
+- PV B SANS ASTREINTE, PV B TERRAIN, PV IT SANS ASTREINTE
+- PF IT TERRAIN, PV G SANS ASTREINTE, PV PE SANS ASTREINTE
 
 ## 🔧 Paramètres
 
@@ -97,6 +120,6 @@
 
 ---
 
-**Version** : v1.0.0  
+**Version** : v1.1.0  
 **Dernière mise à jour** : Mai 2025  
 **Usage** : Interne Enedis uniquement
