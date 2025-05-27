@@ -22,11 +22,20 @@ FICHIER_EXCEL = f'Statistiques_PMT_{ANNEE}.xlsx'
 # ÉQUIPES À ANALYSER
 # =============================================================================
 
-CODES_EQUIPES = [
+CODES_EQUIPES_ASTREINTE = [
     'PV IT ASTREINTE', 
     'PV B ASTREINTE', 
     'PV G ASTREINTE', 
     'PV PE ASTREINTE'
+]
+
+CODES_EQUIPES_HORS_ASTREINTE = [
+  'PV B SANS ASTREINTE',
+  'PV B TERRAIN',
+  'PV IT SANS ASTREINTE',
+  'PF IT TERRAIN',
+  'PV G SANS ASTREINTE',
+  'PV PE SANS ASTREINTE',
 ]
 
 # =============================================================================
@@ -59,6 +68,8 @@ COLONNES_FINALES = [
 ]
 
 NOMS_FEUILLES = {
-    'statistiques': 'Statistiques_Employés',
-    'moyennes': 'Moyennes_par_Équipe'
+    'statistiques': 'ASTREINTE_STATS',
+    'moyennes': 'ASTREINTE_EQUIPE_MOYENNES',
+    'pit_statistiques': 'PIT_STATS',
+    'pit_moyennes': 'PIT_EQUIPE_MOYENNES'
 } 
