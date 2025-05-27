@@ -75,9 +75,13 @@ Génère automatiquement :
 4. Push (`git push origin feature/nouvelle-fonctionnalite`)
 5. Ouvrez une Pull Request
 
+## 📚 Documentation
+
+- 👥 **[Guide Utilisateur](UTILISATION.md)** - Installation et utilisation de l'application
+- 🛠️ **[Guide Développeur](DEVELOPPEUR.md)** - Setup développement et contribution
+
 ## 📞 Support
 
-- 📖 **Documentation** : Voir `UTILISATION.md` et `DEVELOPPEUR.md`
 - 🐛 **Issues** : [GitHub Issues](https://github.com/CapelleGab/ENEDIS-charge-pmt/issues)
 - 📧 **Contact** : CAPELLE Gabin - Enedis
 
