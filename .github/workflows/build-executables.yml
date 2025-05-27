@@ -149,7 +149,7 @@ jobs:
         with:
           path: artifacts/
 
-      - name: 📦 Prepare release assets
+            - name: 📦 Prepare release assets
         run: |
           mkdir -p release-assets
           cd artifacts
@@ -170,37 +170,15 @@ jobs:
           cd ..
           ls -la release-assets/
 
+      - name: 📥 Checkout for changelog
+        uses: actions/checkout@v4
+
       - name: 🚀 Create GitHub Release
         uses: softprops/action-gh-release@v1
         with:
           files: release-assets/*
           name: PMT Analytics ${{ github.ref_name }}
-          body: |
-            ## PMT Analytics ${{ github.ref_name }}
-
-            ### 📥 Téléchargements
-
-            - **Windows** : `PMTAnalytics-Windows-${{ github.ref_name }}.zip`
-            - **macOS** : `PMTAnalytics-macOS-${{ github.ref_name }}.zip`
-
-            ### 🚀 Installation
-
-            **Windows :**
-            1. Téléchargez le fichier ZIP Windows
-            2. Décompressez-le
-            3. Double-cliquez sur `PMTAnalytics.exe`
-
-            **macOS :**
-            1. Téléchargez le fichier ZIP macOS
-            2. Décompressez-le
-            3. Double-cliquez sur `PMTAnalytics.app`
-
-            ### 📝 Notes
-
-            - Build automatique via GitHub Actions
-            - Testé sur Windows et macOS
-            - Date de build : ${{ github.run_id }}
-
+          body_path: CHANGELOG.md
           draft: false
           prerelease: false
         env:
