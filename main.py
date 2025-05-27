@@ -1,67 +1,57 @@
 """
-Script principal d'analyse des statistiques PMT (Planning de Maintenance Technique).
-Architecture modulaire pour une meilleure maintenabilité.
+Point d'entrée principal de PMT Analytics.
+Interface graphique tkinter pour l'analyse des plannings PMT d'Enedis.
 
 author : CAPELLE Gabin
 """
 
-from utils import (
-    charger_donnees_csv,
-    preparer_donnees,
-    supprimer_doublons,
-    appliquer_filtres_base,
-    calculer_statistiques_employes,
-    calculer_moyennes_equipe,
-    formater_donnees_finales,
-    analyser_codes_presence,
-    sauvegarder_excel,
-    afficher_resume_final
-)
+import tkinter as tk
+import sys
+import os
+
+# Gestion spéciale pour les exécutables PyInstaller
+try:
+    from src.gui import PMTAnalyticsInterface
+    import config
+except ImportError as e:
+    # Si l'import échoue, essayer les imports directs (pour PyInstaller)
+    print(f"Import src.gui échoué, tentative d'imports directs: {e}")
+    try:
+        from src.gui.interface import PMTAnalyticsInterface
+        import config
+        print("✅ Imports directs réussis")
+    except ImportError as e2:
+        print(f"❌ Tous les imports ont échoué: {e2}")
+        # Dernière tentative avec sys.path
+        if hasattr(sys, '_MEIPASS'):
+            # Nous sommes dans un exécutable PyInstaller
+            sys.path.insert(0, os.path.join(sys._MEIPASS, 'src', 'gui'))
+            sys.path.insert(0, os.path.join(sys._MEIPASS, 'src'))
+            sys.path.insert(0, sys._MEIPASS)
+        try:
+            from src.gui.interface import PMTAnalyticsInterface
+            import config
+            print("✅ Imports PyInstaller réussis")
+        except ImportError as e3:
+            print(f"❌ Import final échoué: {e3}")
+            raise
 
 
 def main():
-    """
-    Fonction principale du traitement des données PMT.
-    Orchestration de toutes les étapes d'analyse.
-    """
-    # print(f"Traitement des statistiques PMT pour l'année {ANNEE}")
-
-    # ÉTAPE 1 : Chargement des données
-    df_originel = charger_donnees_csv()
-    if df_originel is None:
-        return
+    """Point d'entrée principal de l'application."""
+    root = tk.Tk()
+    app = PMTAnalyticsInterface(root)
     
-    # ÉTAPE 2 : Préparation des données
-    df_equipe = preparer_donnees(df_originel)
-
-    # Analyse des horaires disponibles (pour diagnostic)
-    # analyser_horaires_disponibles(df_equipe)
-
-    # ÉTAPE 3 : Suppression des doublons
-    df_unique = supprimer_doublons(df_equipe)
-
-    # ÉTAPE 4 : Application des filtres
-    df_filtre = appliquer_filtres_base(df_unique)
+    # Centrer la fenêtre
+    root.update_idletasks()
+    width = root.winfo_width()
+    height = root.winfo_height()
+    x = (root.winfo_screenwidth() // 2) - (width // 2)
+    y = (root.winfo_screenheight() // 2) - (height // 2)
+    root.geometry(f"{width}x{height}+{x}+{y}")
     
-    # print(f"\nDonnées après filtrage : {len(df_filtre)} lignes")
-
-    # ÉTAPE 5 : Analyse des codes présents
-    codes_uniques = analyser_codes_presence(df_filtre)
-
-    # ÉTAPE 6 : Calcul des statistiques
-    stats_employes = calculer_statistiques_employes(df_filtre)
-
-    # ÉTAPE 7 : Formatage des données finales
-    stats_final = formater_donnees_finales(stats_employes)
-    
-    # ÉTAPE 8 : Calcul des moyennes par équipe
-    moyennes_equipe = calculer_moyennes_equipe(stats_final)
-    
-    # ÉTAPE 9 : Sauvegarde
-    sauvegarder_excel(stats_final, moyennes_equipe)
-    
-    # ÉTAPE 10 : Affichage du résumé
-    afficher_resume_final(stats_final)
+    # Lancer l'application
+    root.mainloop()
 
 
 if __name__ == "__main__":
