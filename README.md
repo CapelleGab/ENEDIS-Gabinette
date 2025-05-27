@@ -4,8 +4,8 @@
 
 ## 📦 Téléchargements
 
-- **🍎 macOS** : `PMTAnalytics_v1.0.0_macOS.zip` (~45 MB)
-- **🪟 Windows** : `PMTAnalytics_v1.0.0_Windows.zip` (~42 MB)
+- **🍎 macOS** : `PMTAnalytics_v1.0.0_macOS.zip` (~30 MB)
+- **🪟 Windows** : `PMTAnalytics_v1.0.0_Windows.zip` (~37 MB)
 
 ## ✨ Fonctionnalités
 
