@@ -26,7 +26,7 @@ def detect_platform():
 
 def install_dependencies():
     """Installe les dépendances nécessaires."""
-    print("📦 Installation des dépendances...")
+    print("[DEPS] Installation des dépendances...")
     
     # Installer PyInstaller
     try:
@@ -46,7 +46,7 @@ def get_icon_path():
         print(f"[OK] Icône trouvée : {ico_path}")
         return ico_path
     else:
-        print("⚠️ Fichier d'icône non trouvé, création sans icône")
+        print("[WARNING] Fichier d'icône non trouvé, création sans icône")
         return None
 
 def create_spec_file_macos(icon_path=None):
