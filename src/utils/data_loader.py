@@ -84,7 +84,7 @@ def preparer_donnees(df):
                      df['Equipe (Lib.)'])
     
     # Filtrage par équipe
-    df_equipe = df[df['Equipe (Lib.)'].isin(CODES_EQUIPES)].copy()
+    df_equipe = df[df['Equipe (Lib.)'].isin(CODES_EQUIPES_ASTREINTE)].copy()
     
     # Corriger le format français (virgule) vers format anglais (point) pour les décimales
     df_equipe['Valeur'] = df_equipe['Valeur'].astype(str).str.replace(',', '.', regex=False)
@@ -93,6 +93,33 @@ def preparer_donnees(df):
     df_equipe['Valeur'] = pd.to_numeric(df_equipe['Valeur'], errors='coerce')
     
     return df_equipe
+
+
+def preparer_donnees_pit(df):
+    """
+    Prépare les données pour l'analyse des équipes PIT (hors astreinte).
+    
+    Args:
+        df (pd.DataFrame): DataFrame source
+        
+    Returns:
+        pd.DataFrame: DataFrame préparé pour les équipes PIT
+    """
+    # Créer l'identifiant unique employé
+    df['Gentile'] = (df['Nom'] + ' ' + 
+                     df['Prénom'] + ' ' + 
+                     df['Equipe (Lib.)'])
+    
+    # Filtrage par équipe PIT (hors astreinte)
+    df_equipe_pit = df[df['Equipe (Lib.)'].isin(CODES_EQUIPES_HORS_ASTREINTE)].copy()
+    
+    # Corriger le format français (virgule) vers format anglais (point) pour les décimales
+    df_equipe_pit['Valeur'] = df_equipe_pit['Valeur'].astype(str).str.replace(',', '.', regex=False)
+    
+    # Conversion numérique des valeurs
+    df_equipe_pit['Valeur'] = pd.to_numeric(df_equipe_pit['Valeur'], errors='coerce')
+    
+    return df_equipe_pit
 
 
 def supprimer_doublons(df):
