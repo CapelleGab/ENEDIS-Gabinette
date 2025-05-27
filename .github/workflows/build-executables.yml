@@ -82,7 +82,7 @@ jobs:
 
       # 5. Build de l'exécutable
       - name: 🔨 Build executable
-        run: python scripts/build_ci.py
+        run: python src/scripts/build_ci.py
 
       # 6. Vérification du build
       - name: ✅ Verify build
