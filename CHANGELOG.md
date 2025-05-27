@@ -4,15 +4,15 @@
 
 ## 📦 Téléchargements
 
-- **🍎 macOS** : `PMTAnalytics_v1.0.0_macOS.zip` (~45 MB)
-- **🪟 Windows** : `PMTAnalytics_v1.0.0_Windows.zip` (~42 MB)
+- **🍎 macOS** : `PMTAnalytics_v1.0.0_macOS.zip` (~30 MB)
+- **🪟 Windows** : `PMTAnalytics_v1.0.0_windows.zip` (~37 MB)
 
 ## ✨ Fonctionnalités
 
 - 📊 Analyse automatique des fichiers CSV de planning journalier
 - 📈 Statistiques détaillées par employé et équipe
 - 💾 Export Excel formaté avec graphiques
-- 🖥️ Interface graphique moderne et intuitive
+- 🖥️ Interface graphique intuitive
 
 **Développé par** : CAPELLE Gabin - Enedis  
 **Usage** : Interne Enedis uniquement
