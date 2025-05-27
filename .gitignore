@@ -31,7 +31,9 @@ MANIFEST
 
 # PyInstaller
 *.manifest
-*.spec
+scripts/*.spec
+dist_macos/
+dist_windows/
 
 # Environnements virtuels
 .env
