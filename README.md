@@ -1,81 +1,90 @@
-# 📊 PMT Analytics
+# 🎉 PMT Analytics v1.0.0
 
-> **Application d'analyse des statistiques de Planning des techniciens pour Enedis**
+**Application d'analyse des plannings PMT d'Enedis** - Interface graphique moderne pour traiter automatiquement les fichiers CSV de planning journalier.
 
-## 🎯 Présentation
+## 📦 Téléchargements
 
-**PMT Analytics** est une application Python avec interface graphique qui analyse automatiquement les fichiers CSV de planning journalier sur une année d'Enedis et génère des statistiques détaillées sur la présence et les heures travaillées des employés.
+- **🍎 macOS** : `PMTAnalytics_v1.0.0_macOS.zip` (~45 MB)
+- **🪟 Windows** : `PMTAnalytics_v1.0.0_Windows.zip` (~42 MB)
 
-### ✨ Fonctionnalités principales
+## ✨ Fonctionnalités
 
-- 📈 **Analyse automatique** des fichiers CSV de planning journalier
-- 📊 **Statistiques détaillées** par employé et par équipe
-- 💾 **Export Excel** avec tableaux formatés et graphiques
-- 🖥️ **Interface graphique** intuitive
-- 🔍 **Résumé visuel** des résultats en temps réel
+- 📊 **Analyse automatique** des fichiers CSV de planning journalier
+- 📈 **Statistiques détaillées** par employé et équipe
+- 💾 **Export Excel** formaté avec graphiques
+- 🖥️ **Interface graphique** moderne et intuitive
+- 🚀 **Build automatisé** via GitHub Actions
 
-### 🏢 Équipes supportées
+## 🚀 Utilisation rapide
+
+1. **Téléchargez** l'application pour votre OS
+2. **Lancez** l'exécutable
+3. **Sélectionnez** votre fichier CSV de planning
+4. **Analysez** et exportez vers Excel
+
+## 🛠️ Développement
+
+```bash
+# Installation
+git clone https://github.com/CapelleGab/ENEDIS-charge-pmt.git
+cd StatistiquePMT
+python -m venv .venv && source .venv/bin/activate
+pip install -r requirements.txt
+
+# Lancement
+python gui_interface.py
+
+# Build local
+python scripts/build_ci.py
+```
+
+## 📋 Structure
+
+```
+StatistiquePMT/
+├── gui_interface.py    # Interface principale
+├── utils/              # Modules métier
+├── scripts/            # Build automatisé
+├── assets/             # Ressources
+└── config.py          # Configuration
+```
+
+## 🔧 Configuration
+
+Équipes analysées par défaut :
 
 - PV IT ASTREINTE
 - PV B ASTREINTE
 - PV G ASTREINTE
 - PV PE ASTREINTE
 
-## 📚 Documentation
+Modifiez `config.py` pour personnaliser.
 
-Choisissez le guide adapté à votre profil :
+## 📊 Export Excel
 
-### 👥 Pour les utilisateurs
+Génère automatiquement :
 
-**[📖 Guide Utilisateur](UTILISATION.md)**
+- **Feuille 1** : Statistiques par employé
+- **Feuille 2** : Moyennes par équipe
 
-- Installation et lancement de l'application
-- Guide d'utilisation pas à pas
-- Résolution des problèmes courants
-- Format des fichiers CSV attendus
+## 🤝 Contribution
 
-### 🛠️ Pour les développeurs
+1. Fork le projet
+2. Créez votre branche (`git checkout -b feature/nouvelle-fonctionnalite`)
+3. Committez (`git commit -m 'Ajout nouvelle fonctionnalité'`)
+4. Push (`git push origin feature/nouvelle-fonctionnalite`)
+5. Ouvrez une Pull Request
 
-**[⚙️ Guide Développeur](DEVELOPPEUR.md)**
+## 📞 Support
 
-- Configuration de l'environnement de développement
-- Architecture du code et modules
-- Création d'exécutables
-- Contribution au projet
-
-## 🚀 Démarrage rapide
-
-### Utilisateurs
-
-1. Téléchargez `PMTAnalytics.app` (macOS) ou `PMTAnalytics.exe` (Windows)
-2. Lancez l'application
-3. Sélectionnez votre fichier CSV de planning
-4. Consultez les résultats et exportez vers Excel
-
-### Développeurs
-
-```bash
-git clone <repository-url>
-cd StatistiquePMT
-python -m venv .venv
-source .venv/bin/activate  # ou .venv\Scripts\activate sur Windows
-pip install -r requirements.txt
-python gui_interface.py
-```
-
-## 📋 Informations techniques
-
-- **Langage** : Python 3.8+
-- **Interface** : Tkinter
-- **Dépendances** : pandas, openpyxl
-- **Plateformes** : Windows, macOS, Linux
-- **Version actuelle** : 2.0
-
-## 👨‍💻 Auteur
-
-**CAPELLE Gabin** - Enedis  
-_Équipe Maintenance Technique_
+- 📖 **Documentation** : Voir `UTILISATION.md` et `DEVELOPPEUR.md`
+- 🐛 **Issues** : [GitHub Issues](https://github.com/CapelleGab/ENEDIS-charge-pmt/issues)
+- 📧 **Contact** : CAPELLE Gabin - Enedis
 
 ---
 
-📝 **Note** : Cette application est destinée à un usage interne Enedis uniquement.
+**Développé par** : CAPELLE Gabin - Enedis  
+**Version** : v1.0.0  
+**Dernière mise à jour** : Mai 2025  
+**Usage** : Interne Enedis uniquement  
+**Repository** : https://github.com/CapelleGab/ENEDIS-charge-pmt.git

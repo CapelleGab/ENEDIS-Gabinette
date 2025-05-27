@@ -2,209 +2,69 @@
 
 ## 📋 Vue d'ensemble
 
-**PMT Analytics** est une application Python avec interface graphique Tkinter pour l'analyse des plannings de maintenance technique d'Enedis. Le projet utilise une architecture modulaire pour faciliter la maintenance et les évolutions.
+**PMT Analytics** est une application Python avec interface Tkinter pour l'analyse des plannings PMT d'Enedis. Architecture modulaire avec build automatisé via GitHub Actions.
 
-## 🏗️ Architecture du projet
+## 🏗️ Architecture
 
 ```
 StatistiquePMT/
-├── 📁 assets/                  # Ressources (icônes, images)
-│   └── pmtIcon.ico
-├── 📁 scripts/                 # Scripts de build et utilitaires
-│   ├── creer_exe_macos.py     # Création d'exécutable macOS
-│   ├── lancer_app.sh          # Script de lancement
-│   └── README.md
-├── 📁 utils/                   # Modules métier
-│   ├── __init__.py
-│   ├── calculateurs.py        # Calculs statistiques
-│   ├── data_loader.py         # Chargement des données CSV
-│   ├── excel_writer.py        # Export Excel
-│   ├── filtres.py             # Filtrage des données
-│   ├── formatters.py          # Formatage des résultats
-│   ├── horaires.py            # Gestion des horaires
-│   ├── reporter.py            # Génération de rapports
-│   └── statistics.py          # Statistiques avancées
-├── 📄 config.py               # Configuration globale
-├── 📄 gui_interface.py        # Interface graphique principale
-├── 📄 main.py                 # Point d'entrée
-├── 📄 requirements.txt        # Dépendances Python
-└── 📄 README.md              # Documentation principale
+├── gui_interface.py        # Interface principale
+├── main.py                 # Point d'entrée
+├── config.py              # Configuration globale
+├── utils/                 # Modules métier
+│   ├── data_loader.py     # Chargement CSV
+│   ├── calculateurs.py    # Calculs statistiques
+│   ├── excel_writer.py    # Export Excel
+│   ├── filtres.py         # Filtrage données
+│   └── formatters.py      # Formatage résultats
+├── scripts/               # Build et CI/CD
+│   └── build_ci.py        # Build automatisé
+├── assets/                # Ressources
+│   └── pmtIcon.ico        # Icône application
+└── .github/workflows/     # GitHub Actions
+    └── build-executables.yml
 ```
 
-## 🔧 Configuration de l'environnement de développement
-
-### Prérequis
-
-- **Python 3.8+** (testé avec Python 3.9-3.12)
-- **pip** pour la gestion des packages
-- **Git** pour le versioning
-
-### Installation
+## 🚀 Setup développement
 
 ```bash
-# Cloner le repository
-git clone <repository-url>
+# Clone et setup
+git clone https://github.com/CapelleGab/ENEDIS-charge-pmt.git
 cd StatistiquePMT
 
-# Créer un environnement virtuel
+# Environnement virtuel
 python -m venv .venv
+source .venv/bin/activate  # Linux/macOS
+# .venv\Scripts\activate   # Windows
 
-# Activer l'environnement virtuel
-# macOS/Linux:
-source .venv/bin/activate
-# Windows:
-.venv\Scripts\activate
-
-# Installer les dépendances
+# Dépendances
 pip install -r requirements.txt
-```
 
-### Lancement en mode développement
-
-```bash
-# Interface graphique
+# Lancement
 python gui_interface.py
-
-# Ou via le point d'entrée principal
-python main.py
 ```
 
-## 📦 Dépendances principales
+## 📦 Dépendances
 
-| Package    | Version  | Usage                        |
-| ---------- | -------- | ---------------------------- |
-| `pandas`   | ^2.0.0   | Manipulation des données CSV |
-| `openpyxl` | ^3.1.0   | Export Excel                 |
-| `tkinter`  | Built-in | Interface graphique          |
-| `pathlib`  | Built-in | Gestion des chemins          |
-| `datetime` | Built-in | Gestion des dates            |
+| Package       | Version  | Usage                    |
+| ------------- | -------- | ------------------------ |
+| `pandas`      | ^2.0.0   | Manipulation données CSV |
+| `openpyxl`    | ^3.1.0   | Export Excel             |
+| `tkinter`     | Built-in | Interface graphique      |
+| `pyinstaller` | ^6.0.0   | Build exécutables        |
 
-## 🧩 Modules détaillés
+## 🔧 Configuration
 
 ### `config.py`
 
-Configuration centralisée de l'application :
-
 ```python
-ANNEE = '2024'
+ANNEE = '2025'
 CODES_EQUIPES = ['PV IT ASTREINTE', 'PV B ASTREINTE', ...]
 HORAIRE_DEBUT_REFERENCE = '07:30:00'
 CSV_ENCODING = 'latin1'
 ```
 
-### `utils/data_loader.py`
-
-Chargement et validation des données CSV :
-
-- `charger_donnees_csv()` : Lecture du fichier CSV
-- `preparer_donnees()` : Nettoyage et préparation
-- `supprimer_doublons()` : Déduplication
-
-### `utils/calculateurs.py`
-
-Calculs statistiques métier :
-
-- `calculer_statistiques_employes()` : Stats par employé
-- `calculer_moyennes_equipe()` : Moyennes par équipe
-
-### `utils/excel_writer.py`
-
-Export vers Excel avec formatage :
-
-- `sauvegarder_excel()` : Export principal
-- Support des chemins personnalisés
-- Formatage automatique des colonnes
-
-### `gui_interface.py`
-
-Interface graphique principale :
-
-- Classe `PMTAnalyticsInterface`
-- Gestion des événements utilisateur
-- Threading pour les opérations longues
-- Gestion d'erreurs robuste
-
-## 🔄 Flux de traitement des données
-
-```mermaid
-graph TD
-    A[Fichier CSV] --> B[data_loader.charger_donnees_csv]
-    B --> C[data_loader.preparer_donnees]
-    C --> D[data_loader.supprimer_doublons]
-    D --> E[filtres.appliquer_filtres_base]
-    E --> F[calculateurs.calculer_statistiques_employes]
-    F --> G[formatters.formater_donnees_finales]
-    G --> H[calculateurs.calculer_moyennes_equipe]
-    H --> I[excel_writer.sauvegarder_excel]
-```
-
-## 🧪 Tests et qualité
-
-### Structure des tests
-
-```bash
-# Lancer les tests (à implémenter)
-python -m pytest tests/
-
-# Tests manuels avec fichiers d'exemple
-python test_export.py
-```
-
-### Conventions de code
-
-- **PEP 8** pour le style Python
-- **Docstrings** pour toutes les fonctions publiques
-- **Type hints** recommandés pour les nouvelles fonctions
-- **Gestion d'erreurs** explicite avec try/except
-
-### Exemple de fonction bien documentée :
-
-```python
-def calculer_statistiques_employes(df_filtre: pd.DataFrame) -> pd.DataFrame:
-    """
-    Calcule les statistiques détaillées pour chaque employé.
-
-    Args:
-        df_filtre: DataFrame filtré des données de planning
-
-    Returns:
-        DataFrame avec les statistiques par employé
-
-    Raises:
-        ValueError: Si le DataFrame est vide
-        KeyError: Si les colonnes requises sont manquantes
-    """
-```
-
-## 🚀 Build et distribution
-
-### Création d'exécutable macOS
-
-```bash
-# Utiliser le script automatisé
-python scripts/creer_exe_macos.py
-
-# Ou manuellement avec PyInstaller
-pyinstaller --onefile --windowed gui_interface.py
-```
-
-### Structure de l'exécutable généré
-
-```
-dist/
-└── PMTAnalytics.app/
-    └── Contents/
-        ├── MacOS/
-        │   └── PMTAnalytics
-        ├── Resources/
-        └── Info.plist
-```
-
-## 🔧 Configuration avancée
-
-### Modification des équipes analysées
-
-Dans `config.py` :
+### Personnalisation équipes
 
 ```python
 CODES_EQUIPES = [
@@ -213,136 +73,159 @@ CODES_EQUIPES = [
 ]
 ```
 
-### Ajout de nouvelles colonnes Excel
+## 🔄 Flux de données
 
-Dans `config.py` :
-
-```python
-COLONNES_FINALES = [
-    'Nom', 'Prénom', 'Équipe',
-    'Nouvelle_Colonne',  # Ajouter ici
-    # ...
-]
+```
+CSV → data_loader → filtres → calculateurs → formatters → excel_writer
 ```
 
-### Personnalisation des horaires
+1. **Chargement** : `data_loader.charger_donnees_csv()`
+2. **Filtrage** : `filtres.appliquer_filtres_base()`
+3. **Calculs** : `calculateurs.calculer_statistiques_employes()`
+4. **Export** : `excel_writer.sauvegarder_excel()`
 
-```python
-HORAIRE_DEBUT_REFERENCE = '08:00:00'
-HORAIRE_FIN_REFERENCE = '17:00:00'
+## 🏗️ Build et déploiement
+
+### Build local
+
+```bash
+# Build pour la plateforme actuelle
+python scripts/build_ci.py
+
+# Résultat dans dist/
+# macOS: PMTAnalytics.app
+# Windows: PMTAnalytics.exe
 ```
 
-## 🐛 Debugging et logs
+### GitHub Actions
 
-### Activation des logs détaillés
+- **Déclenchement** : Push de tags `v*`
+- **Plateformes** : Windows + macOS en parallèle
+- **Artifacts** : Archives ZIP avec README
+- **Release** : Automatique avec CHANGELOG.md
+
+### Workflow release
+
+```bash
+git tag v1.0.1
+git push origin v1.0.1
+# → Build automatique + release GitHub
+```
+
+## 🧪 Tests et qualité
+
+### Tests manuels
+
+```bash
+python test_export.py
+```
+
+### Conventions
+
+- **PEP 8** pour le style
+- **Docstrings** pour fonctions publiques
+- **Type hints** recommandés
+- **Gestion d'erreurs** explicite
+
+### Exemple fonction
+
+```python
+def calculer_statistiques_employes(df_filtre: pd.DataFrame) -> pd.DataFrame:
+    """
+    Calcule les statistiques détaillées pour chaque employé.
+
+    Args:
+        df_filtre: DataFrame filtré des données
+
+    Returns:
+        DataFrame avec statistiques par employé
+
+    Raises:
+        ValueError: Si DataFrame vide
+    """
+```
+
+## 🐛 Debug et logs
+
+### Activation logs
 
 ```python
 import logging
 logging.basicConfig(level=logging.DEBUG)
 ```
 
-### Points de debug courants
+### Erreurs courantes
 
-- Vérification du format CSV dans `data_loader.py`
-- Validation des calculs dans `calculateurs.py`
-- Gestion des erreurs d'export dans `excel_writer.py`
+| Erreur               | Cause               | Solution               |
+| -------------------- | ------------------- | ---------------------- |
+| `FileNotFoundError`  | CSV manquant        | Vérifier chemin        |
+| `UnicodeDecodeError` | Mauvais encodage    | Forcer `latin1`        |
+| `KeyError`           | Colonne manquante   | Valider format CSV     |
+| `PermissionError`    | Droits insuffisants | Changer dossier export |
 
-## 📈 Métriques et performance
+## 📈 Performance
 
-### Temps de traitement typiques
+### Temps typiques
 
-- **Fichier 1000 lignes** : ~2-3 secondes
-- **Fichier 10000 lignes** : ~5-10 secondes
-- **Export Excel** : ~1-2 secondes
+- **1K lignes** : ~2-3s
+- **10K lignes** : ~5-10s
+- **Export Excel** : ~1-2s
 
 ### Optimisations possibles
 
-- Utilisation de `pandas.read_csv()` avec `chunksize`
-- Cache des calculs intermédiaires
-- Parallélisation avec `multiprocessing`
+- `pandas.read_csv()` avec `chunksize`
+- Cache calculs intermédiaires
+- Parallélisation `multiprocessing`
 
-## 🔄 Workflow de développement
+## 🔄 Workflow Git
 
-### Branches Git
+### Branches
 
 - `main` : Version stable
-- `develop` : Développement en cours
-- `feature/nom-feature` : Nouvelles fonctionnalités
-- `hotfix/nom-bug` : Corrections urgentes
+- `develop` : Développement
+- `feature/nom` : Nouvelles fonctionnalités
+- `hotfix/nom` : Corrections urgentes
 
-### Processus de contribution
+### Commits
 
-1. **Fork** du repository
-2. **Créer une branche** feature
+```bash
+git commit -m "🐛 Fix: Correction export Excel"
+git commit -m "✨ Feat: Support équipes personnalisées"
+git commit -m "📚 Docs: Mise à jour README"
+```
+
+## 🤝 Contribution
+
+1. **Fork** le repository
+2. **Créer** branche feature
 3. **Développer** avec tests
 4. **Commit** avec messages clairs
 5. **Pull Request** vers develop
 
-### Messages de commit
-
-```bash
-# Format recommandé
-git commit -m "🐛 Fix: Correction du bug d'export Excel"
-git commit -m "✨ Feat: Ajout du support des équipes personnalisées"
-git commit -m "📚 Docs: Mise à jour du README développeur"
-```
-
-## 🚨 Gestion d'erreurs
-
-### Erreurs courantes et solutions
-
-| Erreur               | Cause                | Solution                    |
-| -------------------- | -------------------- | --------------------------- |
-| `FileNotFoundError`  | Fichier CSV manquant | Vérifier le chemin          |
-| `UnicodeDecodeError` | Mauvais encodage     | Forcer `latin1`             |
-| `KeyError`           | Colonne manquante    | Valider le format CSV       |
-| `PermissionError`    | Droits insuffisants  | Changer le dossier d'export |
-
-### Logging des erreurs
-
-```python
-import logging
-
-try:
-    # Code risqué
-    pass
-except Exception as e:
-    logging.error(f"Erreur dans {__name__}: {e}")
-    raise
-```
-
-## 📚 Ressources utiles
-
-### Documentation externe
-
-- [Pandas Documentation](https://pandas.pydata.org/docs/)
-- [Tkinter Tutorial](https://docs.python.org/3/library/tkinter.html)
-- [PyInstaller Manual](https://pyinstaller.readthedocs.io/)
-
-### Outils recommandés
-
-- **IDE** : PyCharm, VSCode
-- **Debugging** : pdb, PyCharm debugger
-- **Profiling** : cProfile, line_profiler
-
-## 🤝 Contribution
-
-### Checklist avant PR
+### Checklist PR
 
 - [ ] Code testé manuellement
 - [ ] Docstrings ajoutées
-- [ ] Pas de hardcoding de chemins
-- [ ] Gestion d'erreurs appropriée
+- [ ] Pas de hardcoding
+- [ ] Gestion d'erreurs
 - [ ] Performance acceptable
 
-### Contact
+## 📚 Ressources
 
-- **Auteur** : CAPELLE Gabin
-- **Email** : [email interne Enedis]
-- **Équipe** : Maintenance Technique
+- [Pandas Docs](https://pandas.pydata.org/docs/)
+- [Tkinter Tutorial](https://docs.python.org/3/library/tkinter.html)
+- [PyInstaller Manual](https://pyinstaller.readthedocs.io/)
+- [GitHub Actions Docs](https://docs.github.com/en/actions)
+
+## 📞 Support
+
+- 🐛 **Issues** : [GitHub Issues](https://github.com/CapelleGab/ENEDIS-charge-pmt/issues)
+- 📧 **Contact** : CAPELLE Gabin - Enedis
+- 📖 **Wiki** : [GitHub Wiki](https://github.com/CapelleGab/ENEDIS-charge-pmt/wiki)
 
 ---
 
-**Version** : 2.0  
-**Dernière mise à jour** : Décembre 2024  
+**Version** : v1.0.0  
+**Dernière mise à jour** : Mai 2025  
+**Auteur** : CAPELLE Gabin - Enedis  
 **License** : Usage interne Enedis uniquement
