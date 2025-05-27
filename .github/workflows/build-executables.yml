@@ -99,14 +99,14 @@ jobs:
           mkdir -p release
           if [ "${{ matrix.platform }}" = "windows" ]; then
             cp dist/PMTAnalytics.exe release/
-            echo "Executable Windows créé" > release/README.txt
           else
             cp -r dist/PMTAnalytics.app release/
-            echo "Application macOS créée" > release/README.txt
           fi
-          echo "Version: ${{ github.ref_name || 'manual-build' }}" >> release/README.txt
-          echo "Build date: $(date)" >> release/README.txt
-          echo "Platform: ${{ matrix.platform }}" >> release/README.txt
+
+          # Créer le README avec le contenu du CHANGELOG + lien GitHub
+          cat CHANGELOG.md > release/README.txt
+          echo "" >> release/README.txt
+          echo "**Repository GitHub** : https://github.com/CapelleGab/ENEDIS-charge-pmt.git" >> release/README.txt
         shell: bash
 
       # 8. Upload de l'artifact
