@@ -4,7 +4,7 @@
 
 ## 🎯 Présentation
 
-**PMT Analytics** est une application Python avec interface graphique qui analyse automatiquement les fichiers CSV de planning journalier d'Enedis et génère des statistiques détaillées sur la présence et les heures travaillées des employés.
+**PMT Analytics** est une application Python avec interface graphique qui analyse automatiquement les fichiers CSV de planning journalier sur une année d'Enedis et génère des statistiques détaillées sur la présence et les heures travaillées des employés.
 
 ### ✨ Fonctionnalités principales
 
