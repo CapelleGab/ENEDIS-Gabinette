@@ -1,5 +1,10 @@
 name: Build PMT Analytics Executables
 
+# Permissions nécessaires pour créer des releases
+permissions:
+  contents: write
+  actions: read
+
 # Déclencheurs optimisés pour économiser les minutes
 on:
   # Compilation automatique UNIQUEMENT sur les tags de release
@@ -134,7 +139,7 @@ jobs:
     name: 📋 Create Release
     needs: build
     runs-on: ubuntu-latest
-    if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
+    if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v') && always()
 
     steps:
       - name: 📥 Download all artifacts
@@ -145,23 +150,35 @@ jobs:
       - name: 📦 Prepare release assets
         run: |
           mkdir -p release-assets
-          cd artifacts
+          echo "Contenu du dossier artifacts:"
+          ls -la artifacts/ || echo "Pas d'artifacts trouvés"
 
-          # Créer les archives ZIP
+          cd artifacts || exit 1
+
+          # Créer les archives ZIP si les dossiers existent
           if [ -d "PMTAnalytics-Windows" ]; then
+            echo "Création archive Windows..."
             cd PMTAnalytics-Windows
             zip -r ../../release-assets/PMTAnalytics-Windows-${{ github.ref_name }}.zip .
             cd ..
+            echo "Archive Windows créée"
+          else
+            echo "Pas d'artifacts Windows trouvés"
           fi
 
           if [ -d "PMTAnalytics-macOS" ]; then
+            echo "Création archive macOS..."
             cd PMTAnalytics-macOS  
             zip -r ../../release-assets/PMTAnalytics-macOS-${{ github.ref_name }}.zip .
             cd ..
+            echo "Archive macOS créée"
+          else
+            echo "Pas d'artifacts macOS trouvés"
           fi
 
           cd ..
-          ls -la release-assets/
+          echo "Contenu final release-assets:"
+          ls -la release-assets/ || echo "Aucun fichier de release créé"
 
       - name: 📥 Checkout for changelog
         uses: actions/checkout@v4
@@ -174,5 +191,6 @@ jobs:
           body_path: CHANGELOG.md
           draft: false
           prerelease: false
+          fail_on_unmatched_files: false
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
