@@ -1,5 +1,8 @@
 name: Build PMT Analytics Executables
 
+# Nom personnalisé pour chaque run
+run-name: Workflow run release (${{ github.ref_name || 'manual-build' }})
+
 # Permissions nécessaires pour créer des releases
 permissions:
   contents: write
