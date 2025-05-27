@@ -168,10 +168,6 @@ app = BUNDLE(
 
 def create_spec_file_windows(icon_path=None):
     """Crée un fichier .spec optimisé pour Windows."""
-    if icon_path:
-        icon_line = f"    icon='{icon_path}',"
-    else:
-        icon_line = "    icon=None,"
     
     spec_content = f'''# -*- mode: python ; coding: utf-8 -*-
 
@@ -256,7 +252,7 @@ exe = EXE(
     target_arch=None,
     codesign_identity=None,
     entitlements_file=None,
-{icon_line}
+    icon='{icon_path if icon_path else None}',
 )
 '''
     
