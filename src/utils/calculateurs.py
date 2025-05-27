@@ -116,6 +116,9 @@ def calculer_statistiques_employes(df_filtre):
         (stats['Nb_Jours_Presents'] + stats['Nb_Jours_Partiels']).replace(0, 1)
     ).round(2)
     
+    # Arrondir Total_Jours_Travailles au centième près (2 décimales)
+    stats['Total_Jours_Travailles'] = stats['Total_Jours_Travailles'].round(2)
+    
     return stats
 
 
@@ -129,7 +132,7 @@ def calculer_moyennes_equipe(df_stats):
     Returns:
         pd.DataFrame: DataFrame avec les moyennes par équipe
     """
-    return df_stats.groupby('Équipe').agg(
+    moyennes = df_stats.groupby('Équipe').agg(
         Nb_Employés=('Nom', 'count'),
         Moy_Jours_Présents_Complets=('Jours_Présents_Complets', 'mean'),
         Moy_Jours_Partiels=('Jours_Partiels', 'mean'),
@@ -140,4 +143,13 @@ def calculer_moyennes_equipe(df_stats):
         Moy_Heures_Absence=('Total_Heures_Absence', 'mean'),
         Moy_Présence_365j=('Présence_%_365j', 'mean'),
         Moy_Heures_Par_Jour_Présent=('Moyenne_Heures_Par_Jour_Présent', 'mean')
-    ).round(2).reset_index() 
+    ).reset_index()
+    
+    # Arrondir toutes les colonnes à 2 décimales
+    moyennes = moyennes.round(2)
+    
+    # Arrondir spécifiquement Moy_Jours_Partiels à 1 décimale (dixième près)
+    if 'Moy_Jours_Partiels' in moyennes.columns:
+        moyennes['Moy_Jours_Partiels'] = moyennes['Moy_Jours_Partiels'].round(1)
+    
+    return moyennes 
