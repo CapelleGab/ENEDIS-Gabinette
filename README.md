@@ -1,6 +1,6 @@
 # 📊 PMT Analytics
 
-> **Application d'analyse des statistiques de Planning de Maintenance Technique (PMT) pour Enedis**
+> **Application d'analyse des statistiques de Planning des techniciens pour Enedis**
 
 ## 🎯 Présentation
 
