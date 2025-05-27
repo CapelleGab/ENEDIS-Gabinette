@@ -27,7 +27,7 @@ Choisissez le guide adapté à votre profil :
 
 ### 👥 Pour les utilisateurs
 
-**[📖 Guide Utilisateur](UTILISATEUR.md)**
+**[📖 Guide Utilisateur](UTILISATION.md)**
 
 - Installation et lancement de l'application
 - Guide d'utilisation pas à pas
