@@ -35,7 +35,10 @@ CODES_EQUIPES_HORS_ASTREINTE = [
   'PV IT SANS ASTREINTE',
   'PF IT TERRAIN',
   'PV G SANS ASTREINTE',
+  'PV G CLI/TRAVAUX',
+  'PV G POLE RIP',
   'PV PE SANS ASTREINTE',
+  'PF PE TERRAIN'
 ]
 
 # =============================================================================
