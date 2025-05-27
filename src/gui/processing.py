@@ -11,6 +11,7 @@ import config
 from src.utils import (
     charger_donnees_csv,
     preparer_donnees,
+    preparer_donnees_pit,
     supprimer_doublons,
     appliquer_filtres_base,
     calculer_statistiques_employes,
@@ -61,8 +62,33 @@ class DataProcessor:
             self.log_manager.log_message("🔄 Calcul des moyennes par équipe...")
             moyennes_equipe = calculer_moyennes_equipe(stats_final)
             
+            # Traitement des équipes PIT (hors astreinte)
+            self.log_manager.log_message("🔄 Préparation des données PIT...")
+            df_equipe_pit = preparer_donnees_pit(df_originel)
+            
+            if not df_equipe_pit.empty:
+                self.log_manager.log_message("🔄 Suppression des doublons PIT...")
+                df_unique_pit = supprimer_doublons(df_equipe_pit)
+                
+                self.log_manager.log_message("🔄 Application des filtres PIT...")
+                df_filtre_pit = appliquer_filtres_base(df_unique_pit)
+                self.log_manager.log_message(f"✅ {len(df_filtre_pit)} lignes PIT après filtrage")
+                
+                self.log_manager.log_message("🔄 Calcul des statistiques par employé PIT...")
+                stats_employes_pit = calculer_statistiques_employes(df_filtre_pit)
+                
+                self.log_manager.log_message("🔄 Formatage des données finales PIT...")
+                stats_final_pit = formater_donnees_finales(stats_employes_pit)
+                
+                self.log_manager.log_message("🔄 Calcul des moyennes par équipe PIT...")
+                moyennes_equipe_pit = calculer_moyennes_equipe(stats_final_pit)
+            else:
+                self.log_manager.log_message("⚠️ Aucune donnée PIT trouvée")
+                stats_final_pit = None
+                moyennes_equipe_pit = None
+            
             self.log_manager.log_message("✅ Traitement terminé avec succès !")
-            self.on_success(stats_final, moyennes_equipe)
+            self.on_success(stats_final, moyennes_equipe, stats_final_pit, moyennes_equipe_pit)
             
         except Exception as e:
             error_msg = f"❌ Erreur lors du traitement :\n{str(e)}"
@@ -75,7 +101,7 @@ class SummaryDisplayer:
     def __init__(self, log_manager):
         self.log_manager = log_manager
     
-    def display_summary(self, stats_final, moyennes_equipe, csv_file_path):
+    def display_summary(self, stats_final, moyennes_equipe, csv_file_path, stats_pit=None, moyennes_pit=None):
         """Affiche le résumé de l'analyse dans le journal d'exécution."""
         if stats_final is None or moyennes_equipe is None:
             return
@@ -104,6 +130,11 @@ class SummaryDisplayer:
         self._display_top_employees(top_employes)
         self._display_best_team(best_team, heures_col)
         self._display_team_breakdown(moyennes_equipe, heures_col)
+        
+        # Afficher les statistiques PIT si disponibles
+        if stats_pit is not None and moyennes_pit is not None:
+            self._display_pit_section(stats_pit, moyennes_pit, heures_col)
+        
         self._display_file_info(csv_file_path)
         self._display_footer()
     
@@ -153,6 +184,42 @@ class SummaryDisplayer:
         """Affiche la répartition par équipe."""
         self.log_manager.log_message("📋 RÉPARTITION PAR ÉQUIPE")
         for _, team in moyennes_equipe.iterrows():
+            nb_emp = team.get('Nb_Employés', 'N/A')
+            if heures_col:
+                heures_moy = team[heures_col]
+                self.log_manager.log_message(f"• {team['Équipe']} : {nb_emp} employés, {heures_moy:.1f}h moy.")
+            else:
+                self.log_manager.log_message(f"• {team['Équipe']} : {nb_emp} employés")
+        self.log_manager.log_message("")
+    
+    def _display_pit_section(self, stats_pit, moyennes_pit, heures_col):
+        """Affiche la section PIT (équipes hors astreinte)."""
+        self.log_manager.log_message("🔧 ÉQUIPES PIT (HORS ASTREINTE)")
+        
+        # Statistiques générales PIT
+        nb_employes_pit = len(stats_pit)
+        nb_equipes_pit = len(moyennes_pit)
+        moy_heures_pit = stats_pit['Total_Heures_Travaillées'].mean()
+        moy_presence_pit = stats_pit['Présence_%_365j'].mean()
+        
+        self.log_manager.log_message(f"• Nombre d'employés PIT : {nb_employes_pit}")
+        self.log_manager.log_message(f"• Nombre d'équipes PIT : {nb_equipes_pit}")
+        self.log_manager.log_message(f"• Moyenne d'heures travaillées PIT : {moy_heures_pit:.1f}h")
+        self.log_manager.log_message(f"• Taux de présence moyen PIT : {moy_presence_pit:.1f}%")
+        
+        # Top 3 employés PIT
+        top_employes_pit = stats_pit.nlargest(3, 'Total_Heures_Travaillées')
+        self.log_manager.log_message("")
+        self.log_manager.log_message("🏆 TOP 3 EMPLOYÉS PIT (par heures travaillées)")
+        for i, (_, emp) in enumerate(top_employes_pit.iterrows(), 1):
+            self.log_manager.log_message(
+                f"{i}. {emp['Prénom']} {emp['Nom']} ({emp['Équipe']}) : {emp['Total_Heures_Travaillées']:.1f}h"
+            )
+        
+        # Répartition par équipe PIT
+        self.log_manager.log_message("")
+        self.log_manager.log_message("📋 RÉPARTITION PAR ÉQUIPE PIT")
+        for _, team in moyennes_pit.iterrows():
             nb_emp = team.get('Nb_Employés', 'N/A')
             if heures_col:
                 heures_moy = team[heures_col]

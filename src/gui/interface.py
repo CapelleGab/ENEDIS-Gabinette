@@ -22,6 +22,8 @@ class PMTAnalyticsInterface:
         self.csv_file_path = None
         self.stats_final = None
         self.moyennes_equipe = None
+        self.stats_pit = None
+        self.moyennes_pit = None
         
         # Initialiser les gestionnaires
         self.log_manager = None
@@ -187,10 +189,12 @@ class PMTAnalyticsInterface:
         thread.daemon = True
         thread.start()
     
-    def on_success(self, stats_final, moyennes_equipe):
+    def on_success(self, stats_final, moyennes_equipe, stats_pit=None, moyennes_pit=None):
         """Appelé quand le traitement se termine avec succès."""
         self.stats_final = stats_final
         self.moyennes_equipe = moyennes_equipe
+        self.stats_pit = stats_pit
+        self.moyennes_pit = moyennes_pit
         self.root.after(0, self._on_success_ui)
     
     def _on_success_ui(self):
@@ -205,11 +209,13 @@ class PMTAnalyticsInterface:
         self.summary_displayer.display_summary(
             self.stats_final, 
             self.moyennes_equipe, 
-            self.csv_file_path
+            self.csv_file_path,
+            self.stats_pit,
+            self.moyennes_pit
         )
         
         # Message de succès
-        show_success_message(self.stats_final, self.moyennes_equipe)
+        show_success_message(self.stats_final, self.moyennes_equipe, self.stats_pit, self.moyennes_pit)
     
     def on_error(self, error_message):
         """Appelé quand une erreur survient pendant le traitement."""
@@ -232,5 +238,7 @@ class PMTAnalyticsInterface:
         self.export_manager.export_to_excel(
             self.stats_final, 
             self.moyennes_equipe, 
-            self.csv_file_path
+            self.csv_file_path,
+            self.stats_pit,
+            self.moyennes_pit
         ) 
