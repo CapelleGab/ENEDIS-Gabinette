@@ -16,7 +16,7 @@ class ExportManager:
     def __init__(self, log_manager):
         self.log_manager = log_manager
     
-    def export_to_excel(self, stats_final, moyennes_equipe, csv_file_path, stats_pit=None, moyennes_pit=None):
+    def export_to_excel(self, stats_final, moyennes_equipe, csv_file_path, stats_pit=None, moyennes_pit=None, stats_3x8=None, moyennes_3x8=None):
         """Exporte les résultats vers Excel avec choix du dossier de destination."""
         if stats_final is None or moyennes_equipe is None:
             messagebox.showerror("Erreur", "Aucune donnée à exporter.")
@@ -58,12 +58,14 @@ class ExportManager:
                 return False
             
             # Exporter vers le fichier choisi
-            sauvegarder_excel(stats_final, moyennes_equipe, file_path, stats_pit, moyennes_pit)
+            sauvegarder_excel(stats_final, moyennes_equipe, file_path, stats_pit, moyennes_pit, stats_3x8, moyennes_3x8)
             
             # Message de succès avec le chemin complet
             content_msg = f"📊 Contenu : {len(stats_final)} employés, {len(moyennes_equipe)} équipes"
             if stats_pit is not None and moyennes_pit is not None:
                 content_msg += f"\n📊 PIT : {len(stats_pit)} employés, {len(moyennes_pit)} équipes"
+            if stats_3x8 is not None and moyennes_3x8 is not None:
+                content_msg += f"\n🔄 3x8 : {len(stats_3x8)} employés, {len(moyennes_3x8)} équipes"
             
             messagebox.showinfo(
                 "Export réussi",

@@ -68,7 +68,7 @@ Auteur : CAPELLE Gabin - Enedis"""
     messagebox.showinfo("Aide", help_text)
 
 
-def show_success_message(stats_final, moyennes_equipe, stats_pit=None, moyennes_pit=None):
+def show_success_message(stats_final, moyennes_equipe, stats_pit=None, moyennes_pit=None, stats_3x8=None, moyennes_3x8=None):
     """Affiche le message de succès après traitement."""
     message = (f"✅ Analyse terminée avec succès !\n\n"
                f"• {len(stats_final)} employés analysés (astreinte)\n"
@@ -77,6 +77,10 @@ def show_success_message(stats_final, moyennes_equipe, stats_pit=None, moyennes_
     if stats_pit is not None and moyennes_pit is not None:
         message += (f"\n• {len(stats_pit)} employés analysés (PIT)\n"
                    f"• {len(moyennes_pit)} équipes traitées (PIT)")
+    
+    if stats_3x8 is not None and moyennes_3x8 is not None:
+        message += (f"\n• {len(stats_3x8)} employés analysés (3x8)\n"
+                   f"• {len(moyennes_3x8)} équipes traitées (3x8)")
     
     message += "\n\n💾 Utilisez 'Exporter vers Excel' pour sauvegarder les résultats"
     
@@ -89,4 +93,4 @@ def show_error_message():
         "Erreur de traitement",
         "❌ Une erreur s'est produite pendant le traitement.\n\n"
         "Consultez le journal d'exécution pour plus de détails."
-    ) 
+     ) 

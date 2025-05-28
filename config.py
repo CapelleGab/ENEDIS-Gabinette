@@ -72,7 +72,9 @@ COLONNES_FINALES = [
 
 NOMS_FEUILLES = {
     'statistiques': 'ASTREINTE_STATS',
-    'moyennes': 'ASTREINTE_EQUIPE_MOYENNES',
+    'moyennes': 'ASTREINTE_EQUIPES_MOYENNES',
     'pit_statistiques': 'PIT_STATS',
-    'pit_moyennes': 'PIT_EQUIPE_MOYENNES'
+    'pit_moyennes': 'PIT_EQUIPES_MOYENNES',
+    '3x8_statistiques': '3x8_STATS',
+    '3x8_moyennes': '3x8_EQUIPES_MOYENNES'
 } 
