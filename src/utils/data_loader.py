@@ -132,4 +132,56 @@ def supprimer_doublons(df):
     Returns:
         pd.DataFrame: DataFrame sans doublons
     """
-    return df.drop_duplicates(subset=['Gentile', 'Jour'], keep='first').copy() 
+    return df.drop_duplicates(subset=['Gentile', 'Jour'], keep='first').copy()
+
+
+def preparer_donnees_3x8(df, df_equipe_pit=None):
+    """
+    Prépare les données pour l'analyse des équipes en 3x8.
+    
+    Cette fonction identifie les employés travaillant en 3x8 parmi les équipes PIT
+    et les sépare complètement du reste des employés PIT. Cela permet:
+    1. D'analyser spécifiquement les employés en 3x8 avec leurs propres statistiques
+    2. D'exclure complètement les employés 3x8 des statistiques PIT
+    
+    Args:
+        df (pd.DataFrame): DataFrame source complet
+        df_equipe_pit (pd.DataFrame, optional): DataFrame des équipes PIT déjà préparé
+        
+    Returns:
+        pd.DataFrame: DataFrame des employés travaillant en 3x8 (toutes leurs données)
+        pd.DataFrame: DataFrame des employés PIT standard (sans les employés 3x8)
+    """
+    from .calculateurs_3x8 import est_horaire_3x8
+    import pandas as pd
+    
+    # Si df_equipe_pit n'est pas fourni, on le prépare
+    if df_equipe_pit is None:
+        df_equipe_pit = preparer_donnees_pit(df)
+    
+    if df_equipe_pit.empty:
+        return pd.DataFrame(), df_equipe_pit
+    
+    # Créer une copie pour éviter de modifier l'original
+    df_pit_copy = df_equipe_pit.copy()
+    
+    # Identifier les lignes qui correspondent à des horaires 3x8
+    df_pit_copy['Est_3x8'] = df_pit_copy.apply(est_horaire_3x8, axis=1)
+    
+    # Identifier les employés qui ont au moins un jour en 3x8
+    employes_3x8 = df_pit_copy[df_pit_copy['Est_3x8'] == True]['Gentile'].unique()
+    
+    # Extraire TOUTES les données des employés qui font du 3x8 (pas seulement les jours 3x8)
+    df_employes_3x8 = df_pit_copy[df_pit_copy['Gentile'].isin(employes_3x8)].copy()
+    
+    # Garder uniquement les employés qui ne font jamais de 3x8
+    df_employes_pit_standard = df_pit_copy[~df_pit_copy['Gentile'].isin(employes_3x8)].copy()
+    
+    # Nettoyer les DataFrames en supprimant la colonne temporaire
+    if 'Est_3x8' in df_employes_3x8.columns:
+        df_employes_3x8 = df_employes_3x8.drop(columns=['Est_3x8'])
+    
+    if 'Est_3x8' in df_employes_pit_standard.columns:
+        df_employes_pit_standard = df_employes_pit_standard.drop(columns=['Est_3x8'])
+    
+    return df_employes_3x8, df_employes_pit_standard 
