@@ -1,4 +1,4 @@
-# 🎉 PMT Analytics v1.2.0
+# 🎉 PMT Analytics v1.2.1
 
 **Application d'analyse des plannings PMT d'Enedis** - Interface graphique moderne pour traiter automatiquement les fichiers CSV de planning journalier avec support des équipes d'astreinte, PIT et 3x8.
 
@@ -63,6 +63,8 @@ StatistiquePMT/
 
 - PV IT ASTREINTE, PV B ASTREINTE, PV G ASTREINTE, PV PE ASTREINTE
 
+> **🔧 Spécificité astreinte** : Les équipes d'astreinte incluent TOUS les jours dans leurs calculs, y compris les jours avec "I" dans la colonne Astreinte.
+
 **Équipes PIT - Hors astreinte (6) :**
 
 - PV B SANS ASTREINTE, PV B TERRAIN, PV IT SANS ASTREINTE
@@ -124,7 +126,7 @@ Génère automatiquement **6 feuilles** :
 ---
 
 **Développé par** : CAPELLE Gabin - Enedis  
-**Version** : v1.2.0  
+**Version** : v1.2.1  
 **Dernière mise à jour** : Mai 2025  
 **Usage** : Interne Enedis uniquement  
 **Repository** : https://github.com/CapelleGab/ENEDIS-charge-pmt.git

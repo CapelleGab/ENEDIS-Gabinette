@@ -1,5 +1,24 @@
 # 🎉 PMT Analytics - Changelog
 
+## Version 1.2.1 - Amélioration du traitement des équipes d'astreinte
+
+### 🔧 Améliorations
+
+- **Équipes d'astreinte** : Inclusion des jours d'astreinte (avec "I") dans les calculs
+- **Filtrage spécialisé** : Nouvelle fonction `appliquer_filtres_astreinte()` pour les équipes d'astreinte
+- **Comportement différencié** :
+  - Équipes d'astreinte : Comptent TOUS les jours (avec et sans "I")
+  - Équipes PIT : Continuent d'exclure les jours d'astreinte (inchangé)
+  - Équipes 3x8 : Comportement inchangé
+
+### 🛠️ Technique
+
+- Nouveau filtre `appliquer_filtres_astreinte()` dans `src/utils/filtres.py`
+- Modification du traitement dans `src/gui/processing.py`
+- Messages de log explicites sur l'inclusion des jours d'astreinte
+
+---
+
 ## Version 1.2.0 - Support des équipes 3x8
 
 ### 🆕 Nouvelles fonctionnalités
