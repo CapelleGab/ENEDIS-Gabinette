@@ -15,6 +15,7 @@ from src.utils import (
     preparer_donnees_3x8,
     supprimer_doublons,
     appliquer_filtres_base,
+    appliquer_filtres_astreinte,
     calculer_statistiques_employes,
     calculer_moyennes_equipe,
     calculer_statistiques_3x8,
@@ -49,9 +50,9 @@ class DataProcessor:
             self.log_manager.log_message("🔄 Suppression des doublons...")
             df_unique = supprimer_doublons(df_equipe)
             
-            self.log_manager.log_message("🔄 Application des filtres...")
-            df_filtre = appliquer_filtres_base(df_unique)
-            self.log_manager.log_message(f"✅ {len(df_filtre)} lignes après filtrage")
+            self.log_manager.log_message("🔄 Application des filtres spécifiques astreinte (garde les jours avec 'I')...")
+            df_filtre = appliquer_filtres_astreinte(df_unique)
+            self.log_manager.log_message(f"✅ {len(df_filtre)} lignes après filtrage (jours d'astreinte inclus)")
             
             self.log_manager.log_message("🔄 Analyse des codes de présence...")
             codes_uniques = analyser_codes_presence(df_filtre)
@@ -104,7 +105,7 @@ class DataProcessor:
                     df_filtre_pit = appliquer_filtres_base(df_unique_pit)
                     self.log_manager.log_message(f"✅ {len(df_filtre_pit)} lignes PIT après filtrage")
                     
-                    self.log_manager.log_message("🔄 Calcul des statistiques par employé PIT...")
+                    self.log_manager.log_message("�� Calcul des statistiques par employé PIT...")
                     stats_employes_pit = calculer_statistiques_employes(df_filtre_pit)
                     
                     self.log_manager.log_message("🔄 Formatage des données finales PIT...")
