@@ -310,7 +310,6 @@ class SummaryDisplayer:
         
         # Calcul des totaux des postes 3x8 (avec vérification de l'existence des colonnes)
         total_jours_travailles = stats_3x8['Jours_Travaillés'].sum() if 'Jours_Travaillés' in stats_3x8.columns else 0
-        total_jours_absents_complets = stats_3x8['Jours_Absents_Complets'].sum() if 'Jours_Absents_Complets' in stats_3x8.columns else 0
         total_jours_absents_partiels = stats_3x8['Jours_Absents_Partiels'].sum() if 'Jours_Absents_Partiels' in stats_3x8.columns else 0
         total_jours_absents = stats_3x8['Total_Jours_Absents'].sum() if 'Total_Jours_Absents' in stats_3x8.columns else 0
         total_postes_matin = stats_3x8['Postes_Matin'].sum() if 'Postes_Matin' in stats_3x8.columns else 0
@@ -319,7 +318,6 @@ class SummaryDisplayer:
         
         # Calcul des moyennes par employé
         moy_jours_travailles = stats_3x8['Jours_Travaillés'].mean() if 'Jours_Travaillés' in stats_3x8.columns else 0
-        moy_jours_absents_complets = stats_3x8['Jours_Absents_Complets'].mean() if 'Jours_Absents_Complets' in stats_3x8.columns else 0
         moy_jours_absents_partiels = stats_3x8['Jours_Absents_Partiels'].mean() if 'Jours_Absents_Partiels' in stats_3x8.columns else 0
         moy_total_jours_absents = stats_3x8['Total_Jours_Absents'].mean() if 'Total_Jours_Absents' in stats_3x8.columns else 0
         moy_postes_matin = stats_3x8['Postes_Matin'].mean() if 'Postes_Matin' in stats_3x8.columns else 0
@@ -332,11 +330,9 @@ class SummaryDisplayer:
         
         self.log_manager.log_message("\n📅 STATISTIQUES DE PRÉSENCE 3x8")
         self.log_manager.log_message(f"• Total jours travaillés : {total_jours_travailles:.1f}")
-        self.log_manager.log_message(f"• Total jours d'absence complète : {total_jours_absents_complets:.1f}")
         self.log_manager.log_message(f"• Total jours d'absence partielle : {total_jours_absents_partiels:.1f}")
-        self.log_manager.log_message(f"• Total jours d'absence (complets+partiels) : {total_jours_absents:.1f}")
+        self.log_manager.log_message(f"• Total jours d'absence : {total_jours_absents:.1f}")
         self.log_manager.log_message(f"• Moyenne jours travaillés par employé : {moy_jours_travailles:.1f}")
-        self.log_manager.log_message(f"• Moyenne jours d'absence complète par employé : {moy_jours_absents_complets:.1f}")
         self.log_manager.log_message(f"• Moyenne jours d'absence partielle par employé : {moy_jours_absents_partiels:.1f}")
         self.log_manager.log_message(f"• Moyenne jours d'absence totale par employé : {moy_total_jours_absents:.1f}")
         
@@ -356,7 +352,7 @@ class SummaryDisplayer:
             for i, (_, emp) in enumerate(top_employes_3x8.iterrows(), 1):
                 self.log_manager.log_message(
                     f"{i}. {emp['Prénom']} {emp['Nom']} ({emp['Équipe']}) : {emp['Jours_Travaillés']:.1f} jours travaillés, "
-                    f"Absences: {emp['Jours_Absents_Complets']:.1f} complets + {emp['Jours_Absents_Partiels']:.1f} partiels - "
+                    f"Absences: {emp['Jours_Absents_Partiels']:.1f} partiels - "
                     f"Postes: Matin: {emp['Postes_Matin']}, Après-midi: {emp['Postes_Apres_Midi']}, Nuit: {emp['Postes_Nuit']}"
                 )
         
@@ -367,7 +363,6 @@ class SummaryDisplayer:
             for _, team in moyennes_3x8.iterrows():
                 nb_emp = team.get('Nb_Employés', 'N/A')
                 moy_jours = team.get('Moy_Jours_Travaillés', 0)
-                moy_absents_complets = team.get('Moy_Jours_Absents_Complets', 0)
                 moy_absents_partiels = team.get('Moy_Jours_Absents_Partiels', 0)
                 
                 # Vérifier si nous avons les totaux ou les moyennes des postes
@@ -377,7 +372,7 @@ class SummaryDisplayer:
                     nuit = team.get('Total_Postes_Nuit', 0)
                     self.log_manager.log_message(
                         f"• {team['Équipe']} : {nb_emp} employés, {moy_jours:.1f} jours travaillés, "
-                        f"Absences: {moy_absents_complets:.1f} complets + {moy_absents_partiels:.1f} partiels - "
+                        f"Absences: {moy_absents_partiels:.1f} partiels - "
                         f"Total postes: Matin: {matin}, Après-midi: {apres_midi}, Nuit: {nuit}"
                     )
                 else:
@@ -386,7 +381,7 @@ class SummaryDisplayer:
                     nuit = team.get('Moy_Postes_Nuit', 0)
                     self.log_manager.log_message(
                         f"• {team['Équipe']} : {nb_emp} employés, {moy_jours:.1f} jours travaillés, "
-                        f"Absences: {moy_absents_complets:.1f} complets + {moy_absents_partiels:.1f} partiels - "
+                        f"Absences: {moy_absents_partiels:.1f} partiels - "
                         f"Moyenne postes: Matin: {matin:.1f}, Après-midi: {apres_midi:.1f}, Nuit: {nuit:.1f}"
                     )
         
