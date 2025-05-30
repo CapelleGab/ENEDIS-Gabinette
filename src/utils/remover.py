@@ -24,22 +24,10 @@ def supprimer_astreinte_insuffisants(stats_astreinte):
     
     # Vérifier que la colonne existe
     if 'Jours_Présents_Complets' not in stats_astreinte.columns:
-        print("Attention: La colonne 'Jours_Présents_Complets' n'existe pas dans les données d'astreinte")
         return stats_astreinte
-    
-    # Compter le nombre d'employés avant filtrage
-    nb_avant = len(stats_astreinte)
     
     # Filtrer les employés avec au moins 50 jours présents complets
     stats_filtre = stats_astreinte[stats_astreinte['Jours_Présents_Complets'] >= 50].copy()
-    
-    # Compter le nombre d'employés après filtrage
-    nb_apres = len(stats_filtre)
-    nb_supprimes = nb_avant - nb_apres
-    
-    if nb_supprimes > 0:
-        print(f"ASTREINTE: {nb_supprimes} employé(s) supprimé(s) (moins de 50 jours présents complets)")
-        print(f"ASTREINTE: {nb_apres} employé(s) conservé(s) sur {nb_avant}")
     
     return stats_filtre
 
@@ -59,22 +47,10 @@ def supprimer_tip_insuffisants(stats_tip):
     
     # Vérifier que la colonne existe
     if 'Jours_Présents_Complets' not in stats_tip.columns:
-        print("Attention: La colonne 'Jours_Présents_Complets' n'existe pas dans les données TIP")
         return stats_tip
-    
-    # Compter le nombre d'employés avant filtrage
-    nb_avant = len(stats_tip)
     
     # Filtrer les employés avec au moins 55 jours présents complets
     stats_filtre = stats_tip[stats_tip['Jours_Présents_Complets'] >= 55].copy()
-    
-    # Compter le nombre d'employés après filtrage
-    nb_apres = len(stats_filtre)
-    nb_supprimes = nb_avant - nb_apres
-    
-    if nb_supprimes > 0:
-        print(f"TIP: {nb_supprimes} employé(s) supprimé(s) (moins de 55 jours présents complets)")
-        print(f"TIP: {nb_apres} employé(s) conservé(s) sur {nb_avant}")
     
     return stats_filtre
 
@@ -94,6 +70,4 @@ def supprimer_3x8_insuffisants(stats_3x8):
         return stats_3x8
     
     # Pour l'instant, aucun filtrage n'est appliqué aux employés 3x8
-    print(f"3x8: Aucun filtrage appliqué - {len(stats_3x8)} employé(s) conservé(s)")
-    
     return stats_3x8.copy() 

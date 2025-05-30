@@ -98,4 +98,4 @@ def appliquer_filtres_base(df):
     df = df[df['Horaire_Reference'] == True].copy()
     # print(f"Après filtrage horaires {HORAIRE_DEBUT_REFERENCE}-{HORAIRE_FIN_REFERENCE}: {len(df)} lignes")
     
-    return df
+    return df 

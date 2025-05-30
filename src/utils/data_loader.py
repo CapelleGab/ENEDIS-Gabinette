@@ -55,7 +55,6 @@ def charger_donnees_csv(fichier_csv=None):
             available_columns = list(df.columns)[:10]  # Premières 10 colonnes
             raise ValueError(f"Colonnes manquantes: {missing_columns}. Colonnes disponibles: {available_columns}")
         
-        print(f"✅ Données chargées : {len(df)} lignes, {len(df.columns)} colonnes")
         return df
         
     except UnicodeDecodeError as e:

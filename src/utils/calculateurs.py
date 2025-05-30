@@ -50,8 +50,8 @@ def calculer_heures_travaillees(row):
                     else:
                         # Si pas d'unité : valeur = nombre d'heures d'absence (ancien comportement)
                         # Exemple: 2 heures d'absence = 8-2 = 6h travaillées
-                        heures_travaillees = 8.0 - valeur
-                        return max(0, heures_travaillees)  # Minimum 0 heures
+                    heures_travaillees = 8.0 - valeur
+                    return max(0, heures_travaillees)  # Minimum 0 heures
                 else:
                     return 8.0  # Valeur négative = journée complète
             else:
