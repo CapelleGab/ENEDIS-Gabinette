@@ -22,8 +22,8 @@ class PMTAnalyticsInterface:
         self.csv_file_path = None
         self.stats_final = None
         self.moyennes_equipe = None
-        self.stats_pit = None
-        self.moyennes_pit = None
+        self.stats_tip = None
+        self.moyennes_tip = None
         self.stats_3x8 = None
         self.moyennes_3x8 = None
         
@@ -191,12 +191,12 @@ class PMTAnalyticsInterface:
         thread.daemon = True
         thread.start()
     
-    def on_success(self, stats_final, moyennes_equipe, stats_pit=None, moyennes_pit=None, stats_3x8=None, moyennes_3x8=None):
+    def on_success(self, stats_final, moyennes_equipe, stats_tip=None, moyennes_tip=None, stats_3x8=None, moyennes_3x8=None):
         """Appelé quand le traitement se termine avec succès."""
         self.stats_final = stats_final
         self.moyennes_equipe = moyennes_equipe
-        self.stats_pit = stats_pit
-        self.moyennes_pit = moyennes_pit
+        self.stats_tip = stats_tip
+        self.moyennes_tip = moyennes_tip
         self.stats_3x8 = stats_3x8
         self.moyennes_3x8 = moyennes_3x8
         self.root.after(0, self._on_success_ui)
@@ -214,14 +214,14 @@ class PMTAnalyticsInterface:
             self.stats_final, 
             self.moyennes_equipe, 
             self.csv_file_path,
-            self.stats_pit,
-            self.moyennes_pit,
+            self.stats_tip,
+            self.moyennes_tip,
             self.stats_3x8,
             self.moyennes_3x8
         )
         
         # Message de succès
-        show_success_message(self.stats_final, self.moyennes_equipe, self.stats_pit, self.moyennes_pit, self.stats_3x8, self.moyennes_3x8)
+        show_success_message(self.stats_final, self.moyennes_equipe, self.stats_tip, self.moyennes_tip, self.stats_3x8, self.moyennes_3x8)
     
     def on_error(self, error_message):
         """Appelé quand une erreur survient pendant le traitement."""
@@ -245,8 +245,8 @@ class PMTAnalyticsInterface:
             self.stats_final, 
             self.moyennes_equipe, 
             self.csv_file_path,
-            self.stats_pit,
-            self.moyennes_pit,
+            self.stats_tip,
+            self.moyennes_tip,
             self.stats_3x8,
             self.moyennes_3x8
         ) 

@@ -44,37 +44,37 @@ def supprimer_astreinte_insuffisants(stats_astreinte):
     return stats_filtre
 
 
-def supprimer_pit_insuffisants(stats_pit):
+def supprimer_tip_insuffisants(stats_tip):
     """
-    Supprime les employés PIT qui ont moins de 55 jours présents complets.
+    Supprime les employés TIP qui ont moins de 55 jours présents complets.
     
     Args:
-        stats_pit (pd.DataFrame): DataFrame avec les statistiques PIT
+        stats_tip (pd.DataFrame): DataFrame avec les statistiques TIP
         
     Returns:
         pd.DataFrame: DataFrame filtré sans les employés ayant moins de 55 jours présents complets
     """
-    if stats_pit.empty:
-        return stats_pit
+    if stats_tip.empty:
+        return stats_tip
     
     # Vérifier que la colonne existe
-    if 'Jours_Présents_Complets' not in stats_pit.columns:
-        print("Attention: La colonne 'Jours_Présents_Complets' n'existe pas dans les données PIT")
-        return stats_pit
+    if 'Jours_Présents_Complets' not in stats_tip.columns:
+        print("Attention: La colonne 'Jours_Présents_Complets' n'existe pas dans les données TIP")
+        return stats_tip
     
     # Compter le nombre d'employés avant filtrage
-    nb_avant = len(stats_pit)
+    nb_avant = len(stats_tip)
     
     # Filtrer les employés avec au moins 55 jours présents complets
-    stats_filtre = stats_pit[stats_pit['Jours_Présents_Complets'] >= 55].copy()
+    stats_filtre = stats_tip[stats_tip['Jours_Présents_Complets'] >= 55].copy()
     
     # Compter le nombre d'employés après filtrage
     nb_apres = len(stats_filtre)
     nb_supprimes = nb_avant - nb_apres
     
     if nb_supprimes > 0:
-        print(f"PIT: {nb_supprimes} employé(s) supprimé(s) (moins de 55 jours présents complets)")
-        print(f"PIT: {nb_apres} employé(s) conservé(s) sur {nb_avant}")
+        print(f"TIP: {nb_supprimes} employé(s) supprimé(s) (moins de 55 jours présents complets)")
+        print(f"TIP: {nb_apres} employé(s) conservé(s) sur {nb_avant}")
     
     return stats_filtre
 

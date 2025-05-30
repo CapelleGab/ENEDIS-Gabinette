@@ -11,7 +11,7 @@ import config
 from src.utils import (
     charger_donnees_csv,
     preparer_donnees,
-    preparer_donnees_pit,
+    preparer_donnees_tip,
     preparer_donnees_3x8,
     supprimer_doublons,
     appliquer_filtres_base,
@@ -23,7 +23,7 @@ from src.utils import (
     formater_donnees_finales,
     analyser_codes_presence,
     supprimer_astreinte_insuffisants,
-    supprimer_pit_insuffisants,
+    supprimer_tip_insuffisants,
     supprimer_3x8_insuffisants
 )
 
@@ -72,60 +72,60 @@ class DataProcessor:
             self.log_manager.log_message("🔄 Calcul des moyennes par équipe...")
             moyennes_equipe = calculer_moyennes_equipe(stats_final)
             
-            # Traitement des équipes PIT (hors astreinte) et 3x8
-            self.log_manager.log_message("🔄 Préparation des données PIT...")
-            df_equipe_pit = preparer_donnees_pit(df_originel)
+            # Traitement des équipes TIP (hors astreinte) et 3x8
+            self.log_manager.log_message("🔄 Préparation des données TIP...")
+            df_equipe_tip = preparer_donnees_tip(df_originel)
             
             # Variables pour stocker les résultats
-            stats_final_pit = None
-            moyennes_equipe_pit = None
+            stats_final_tip = None
+            moyennes_equipe_tip = None
             stats_final_3x8 = None
             moyennes_equipe_3x8 = None
             
-            if not df_equipe_pit.empty:
-                # Extraction des données 3x8 à partir des données PIT
+            if not df_equipe_tip.empty:
+                # Extraction des données 3x8 à partir des données TIP
                 self.log_manager.log_message("🔄 Identification des employés en 3x8...")
-                df_employes_3x8, df_employes_pit_standard = preparer_donnees_3x8(df_originel, df_equipe_pit)
+                df_employes_3x8, df_employes_tip_standard = preparer_donnees_3x8(df_originel, df_equipe_tip)
                 
-                # Informer sur la séparation des 3x8 et PIT
+                # Informer sur la séparation des 3x8 et TIP
                 if not df_employes_3x8.empty:
                     nb_employes_3x8 = len(df_employes_3x8['Gentile'].unique())
                     nb_jours_3x8 = len(df_employes_3x8)
-                    nb_employes_pit_total = len(df_equipe_pit['Gentile'].unique())
-                    nb_employes_pit_standard = len(df_employes_pit_standard['Gentile'].unique())
+                    nb_employes_tip_total = len(df_equipe_tip['Gentile'].unique())
+                    nb_employes_tip_standard = len(df_employes_tip_standard['Gentile'].unique())
                     
                     self.log_manager.log_message(f"✅ {nb_employes_3x8} employés en 3x8 identifiés avec {nb_jours_3x8} jours de données")
-                    self.log_manager.log_message(f"📊 {nb_employes_pit_standard}/{nb_employes_pit_total} employés PIT après exclusion complète des employés 3x8")
+                    self.log_manager.log_message(f"📊 {nb_employes_tip_standard}/{nb_employes_tip_total} employés TIP après exclusion complète des employés 3x8")
                     
                     # Message explicite sur la méthode de séparation
-                    self.log_manager.log_message("ℹ️ IMPORTANT: Les employés qui travaillent en 3x8 ont été complètement exclus des statistiques PIT")
-                    self.log_manager.log_message("   Les employés 3x8 et PIT sont maintenant dans des catégories distinctes")
+                    self.log_manager.log_message("ℹ️ IMPORTANT: Les employés qui travaillent en 3x8 ont été complètement exclus des statistiques TIP")
+                    self.log_manager.log_message("   Les employés 3x8 et TIP sont maintenant dans des catégories distinctes")
                 
-                # Traitement des données PIT (sans employés 3x8)
-                self.log_manager.log_message("🔄 Traitement des données PIT (sans employés 3x8)...")
-                if not df_employes_pit_standard.empty:
-                    self.log_manager.log_message("🔄 Suppression des doublons PIT...")
-                    df_unique_pit = supprimer_doublons(df_employes_pit_standard)
+                # Traitement des données TIP (sans employés 3x8)
+                self.log_manager.log_message("🔄 Traitement des données TIP (sans employés 3x8)...")
+                if not df_employes_tip_standard.empty:
+                    self.log_manager.log_message("🔄 Suppression des doublons TIP...")
+                    df_unique_tip = supprimer_doublons(df_employes_tip_standard)
                     
-                    self.log_manager.log_message("🔄 Application des filtres PIT...")
-                    df_filtre_pit = appliquer_filtres_base(df_unique_pit)
-                    self.log_manager.log_message(f"✅ {len(df_filtre_pit)} lignes PIT après filtrage")
+                    self.log_manager.log_message("🔄 Application des filtres TIP...")
+                    df_filtre_tip = appliquer_filtres_base(df_unique_tip)
+                    self.log_manager.log_message(f"✅ {len(df_filtre_tip)} lignes TIP après filtrage")
                     
-                    self.log_manager.log_message("🔄 Calcul des statistiques par employé PIT...")
-                    stats_employes_pit = calculer_statistiques_employes(df_filtre_pit)
+                    self.log_manager.log_message("🔄 Calcul des statistiques par employé TIP...")
+                    stats_employes_tip = calculer_statistiques_employes(df_filtre_tip)
                     
-                    self.log_manager.log_message("🔄 Formatage des données finales PIT...")
-                    stats_final_pit = formater_donnees_finales(stats_employes_pit)
+                    self.log_manager.log_message("🔄 Formatage des données finales TIP...")
+                    stats_final_tip = formater_donnees_finales(stats_employes_tip)
                     
-                    self.log_manager.log_message("🔄 Suppression des employés PIT avec moins de 55 jours présents complets...")
-                    stats_final_pit = supprimer_pit_insuffisants(stats_final_pit)
+                    self.log_manager.log_message("🔄 Suppression des employés TIP avec moins de 55 jours présents complets...")
+                    stats_final_tip = supprimer_tip_insuffisants(stats_final_tip)
                     
-                    self.log_manager.log_message("🔄 Calcul des moyennes par équipe PIT...")
-                    moyennes_equipe_pit = calculer_moyennes_equipe(stats_final_pit)
+                    self.log_manager.log_message("🔄 Calcul des moyennes par équipe TIP...")
+                    moyennes_equipe_tip = calculer_moyennes_equipe(stats_final_tip)
                     
-                    self.log_manager.log_message(f"✅ Statistiques PIT calculées pour {len(stats_final_pit)} employés (employés 3x8 exclus)")
+                    self.log_manager.log_message(f"✅ Statistiques TIP calculées pour {len(stats_final_tip)} employés (employés 3x8 exclus)")
                 else:
-                    self.log_manager.log_message("⚠️ Aucune donnée PIT (hors employés 3x8) trouvée")
+                    self.log_manager.log_message("⚠️ Aucune donnée TIP (hors employés 3x8) trouvée")
                 
                 # Traitement des données 3x8 avec le nouveau calculateur spécifique
                 self.log_manager.log_message("🔄 Traitement des données 3x8...")
@@ -153,10 +153,10 @@ class DataProcessor:
                 else:
                     self.log_manager.log_message("⚠️ Aucun employé en 3x8 trouvé")
             else:
-                self.log_manager.log_message("⚠️ Aucune donnée PIT trouvée")
+                self.log_manager.log_message("⚠️ Aucune donnée TIP trouvée")
             
             self.log_manager.log_message("✅ Traitement terminé avec succès !")
-            self.on_success(stats_final, moyennes_equipe, stats_final_pit, moyennes_equipe_pit, stats_final_3x8, moyennes_equipe_3x8)
+            self.on_success(stats_final, moyennes_equipe, stats_final_tip, moyennes_equipe_tip, stats_final_3x8, moyennes_equipe_3x8)
             
         except Exception as e:
             error_msg = f"❌ Erreur lors du traitement :\n{str(e)}"
@@ -169,7 +169,7 @@ class SummaryDisplayer:
     def __init__(self, log_manager):
         self.log_manager = log_manager
     
-    def display_summary(self, stats_final, moyennes_equipe, csv_file_path, stats_pit=None, moyennes_pit=None, stats_3x8=None, moyennes_3x8=None):
+    def display_summary(self, stats_final, moyennes_equipe, csv_file_path, stats_tip=None, moyennes_tip=None, stats_3x8=None, moyennes_3x8=None):
         """Affiche le résumé de l'analyse dans le journal d'exécution."""
         if stats_final is None or moyennes_equipe is None:
             return
@@ -199,9 +199,9 @@ class SummaryDisplayer:
         self._display_best_team(best_team, heures_col)
         self._display_team_breakdown(moyennes_equipe, heures_col)
         
-        # Afficher les statistiques PIT si disponibles
-        if stats_pit is not None and moyennes_pit is not None:
-            self._display_pit_section(stats_pit, moyennes_pit, heures_col)
+        # Afficher les statistiques TIP si disponibles
+        if stats_tip is not None and moyennes_tip is not None:
+            self._display_tip_section(stats_tip, moyennes_tip, heures_col)
         
         # Afficher les statistiques 3x8 si disponibles
         if stats_3x8 is not None and moyennes_3x8 is not None:
@@ -264,34 +264,34 @@ class SummaryDisplayer:
                 self.log_manager.log_message(f"• {team['Équipe']} : {nb_emp} employés")
         self.log_manager.log_message("")
     
-    def _display_pit_section(self, stats_pit, moyennes_pit, heures_col):
-        """Affiche la section PIT (équipes hors astreinte)."""
-        self.log_manager.log_message("🔧 ÉQUIPES PIT (HORS ASTREINTE ET SANS EMPLOYÉS 3x8)")
+    def _display_tip_section(self, stats_tip, moyennes_tip, heures_col):
+        """Affiche la section TIP (équipes hors astreinte)."""
+        self.log_manager.log_message("🔧 ÉQUIPES TIP (HORS ASTREINTE ET SANS EMPLOYÉS 3x8)")
         
-        # Statistiques générales PIT
-        nb_employes_pit = len(stats_pit)
-        nb_equipes_pit = len(moyennes_pit)
-        moy_heures_pit = stats_pit['Total_Heures_Travaillées'].mean()
-        moy_presence_pit = stats_pit['Présence_%_365j'].mean()
+        # Statistiques générales TIP
+        nb_employes_tip = len(stats_tip)
+        nb_equipes_tip = len(moyennes_tip)
+        moy_heures_tip = stats_tip['Total_Heures_Travaillées'].mean()
+        moy_presence_tip = stats_tip['Présence_%_365j'].mean()
         
-        self.log_manager.log_message(f"• Nombre d'employés PIT (sans employés 3x8) : {nb_employes_pit}")
-        self.log_manager.log_message(f"• Nombre d'équipes PIT : {nb_equipes_pit}")
-        self.log_manager.log_message(f"• Moyenne d'heures travaillées PIT : {moy_heures_pit:.1f}h")
-        self.log_manager.log_message(f"• Taux de présence moyen PIT : {moy_presence_pit:.1f}%")
+        self.log_manager.log_message(f"• Nombre d'employés TIP (sans employés 3x8) : {nb_employes_tip}")
+        self.log_manager.log_message(f"• Nombre d'équipes TIP : {nb_equipes_tip}")
+        self.log_manager.log_message(f"• Moyenne d'heures travaillées TIP : {moy_heures_tip:.1f}h")
+        self.log_manager.log_message(f"• Taux de présence moyen TIP : {moy_presence_tip:.1f}%")
         
-        # Top 3 employés PIT
-        top_employes_pit = stats_pit.nlargest(3, 'Total_Heures_Travaillées')
+        # Top 3 employés TIP
+        top_employes_tip = stats_tip.nlargest(3, 'Total_Heures_Travaillées')
         self.log_manager.log_message("")
-        self.log_manager.log_message("🏆 TOP 3 EMPLOYÉS PIT (par heures travaillées)")
-        for i, (_, emp) in enumerate(top_employes_pit.iterrows(), 1):
+        self.log_manager.log_message("🏆 TOP 3 EMPLOYÉS TIP (par heures travaillées)")
+        for i, (_, emp) in enumerate(top_employes_tip.iterrows(), 1):
             self.log_manager.log_message(
                 f"{i}. {emp['Prénom']} {emp['Nom']} ({emp['Équipe']}) : {emp['Total_Heures_Travaillées']:.1f}h"
             )
         
-        # Répartition par équipe PIT
+        # Répartition par équipe TIP
         self.log_manager.log_message("")
-        self.log_manager.log_message("📋 RÉPARTITION PAR ÉQUIPE PIT")
-        for _, team in moyennes_pit.iterrows():
+        self.log_manager.log_message("📋 RÉPARTITION PAR ÉQUIPE TIP")
+        for _, team in moyennes_tip.iterrows():
             nb_emp = team.get('Nb_Employés', 'N/A')
             if heures_col:
                 heures_moy = team[heures_col]

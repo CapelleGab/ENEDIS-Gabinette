@@ -8,7 +8,7 @@ import pandas as pd
 from config import FICHIER_EXCEL, NOMS_FEUILLES
 
 
-def sauvegarder_excel(stats_final, moyennes_equipe, fichier_path=None, stats_pit=None, moyennes_pit=None, stats_3x8=None, moyennes_3x8=None):
+def sauvegarder_excel(stats_final, moyennes_equipe, fichier_path=None, stats_tip=None, moyennes_tip=None, stats_3x8=None, moyennes_3x8=None):
     """
     Sauvegarde les données dans un fichier Excel.
     
@@ -16,8 +16,8 @@ def sauvegarder_excel(stats_final, moyennes_equipe, fichier_path=None, stats_pit
         stats_final (pd.DataFrame): Statistiques par employé (astreinte)
         moyennes_equipe (pd.DataFrame): Moyennes par équipe (astreinte)
         fichier_path (str, optional): Chemin du fichier Excel. Si None, utilise FICHIER_EXCEL de config.
-        stats_pit (pd.DataFrame, optional): Statistiques par employé PIT (hors astreinte)
-        moyennes_pit (pd.DataFrame, optional): Moyennes par équipe PIT (hors astreinte)
+        stats_tip (pd.DataFrame, optional): Statistiques par employé TIP (hors astreinte)
+        moyennes_tip (pd.DataFrame, optional): Moyennes par équipe TIP (hors astreinte)
         stats_3x8 (pd.DataFrame, optional): Statistiques par employé 3x8
         moyennes_3x8 (pd.DataFrame, optional): Moyennes par équipe 3x8
     """
@@ -30,10 +30,10 @@ def sauvegarder_excel(stats_final, moyennes_equipe, fichier_path=None, stats_pit
         stats_final.to_excel(writer, sheet_name=NOMS_FEUILLES['statistiques'], index=False)
         moyennes_equipe.to_excel(writer, sheet_name=NOMS_FEUILLES['moyennes'], index=False)
         
-        # Feuilles pour les équipes PIT (hors astreinte) si les données sont fournies
-        if stats_pit is not None and moyennes_pit is not None:
-            stats_pit.to_excel(writer, sheet_name=NOMS_FEUILLES['pit_statistiques'], index=False)
-            moyennes_pit.to_excel(writer, sheet_name=NOMS_FEUILLES['pit_moyennes'], index=False) 
+        # Feuilles pour les équipes TIP (hors astreinte) si les données sont fournies
+        if stats_tip is not None and moyennes_tip is not None:
+            stats_tip.to_excel(writer, sheet_name=NOMS_FEUILLES['tip_statistiques'], index=False)
+            moyennes_tip.to_excel(writer, sheet_name=NOMS_FEUILLES['tip_moyennes'], index=False) 
         
         # Feuilles pour les équipes 3x8 si les données sont fournies
         if stats_3x8 is not None and moyennes_3x8 is not None:

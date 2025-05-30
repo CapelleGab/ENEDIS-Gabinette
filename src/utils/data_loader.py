@@ -95,31 +95,31 @@ def preparer_donnees(df):
     return df_equipe
 
 
-def preparer_donnees_pit(df):
+def preparer_donnees_tip(df):
     """
-    Prépare les données pour l'analyse des équipes PIT (hors astreinte).
+    Prépare les données pour l'analyse des équipes TIP (hors astreinte).
     
     Args:
         df (pd.DataFrame): DataFrame source
         
     Returns:
-        pd.DataFrame: DataFrame préparé pour les équipes PIT
+        pd.DataFrame: DataFrame préparé pour les équipes TIP
     """
     # Créer l'identifiant unique employé
     df['Gentile'] = (df['Nom'] + ' ' + 
                      df['Prénom'] + ' ' + 
                      df['Equipe (Lib.)'])
     
-    # Filtrage par équipe PIT (hors astreinte)
-    df_equipe_pit = df[df['Equipe (Lib.)'].isin(CODES_EQUIPES_HORS_ASTREINTE)].copy()
+    # Filtrage par équipe TIP (hors astreinte)
+    df_equipe_tip = df[df['Equipe (Lib.)'].isin(CODES_EQUIPES_HORS_ASTREINTE)].copy()
     
     # Corriger le format français (virgule) vers format anglais (point) pour les décimales
-    df_equipe_pit['Valeur'] = df_equipe_pit['Valeur'].astype(str).str.replace(',', '.', regex=False)
+    df_equipe_tip['Valeur'] = df_equipe_tip['Valeur'].astype(str).str.replace(',', '.', regex=False)
     
     # Conversion numérique des valeurs
-    df_equipe_pit['Valeur'] = pd.to_numeric(df_equipe_pit['Valeur'], errors='coerce')
+    df_equipe_tip['Valeur'] = pd.to_numeric(df_equipe_tip['Valeur'], errors='coerce')
     
-    return df_equipe_pit
+    return df_equipe_tip
 
 
 def supprimer_doublons(df):
@@ -135,53 +135,53 @@ def supprimer_doublons(df):
     return df.drop_duplicates(subset=['Gentile', 'Jour'], keep='first').copy() 
 
 
-def preparer_donnees_3x8(df, df_equipe_pit=None):
+def preparer_donnees_3x8(df, df_equipe_tip=None):
     """
     Prépare les données pour l'analyse des équipes en 3x8.
     
-    Cette fonction identifie les employés travaillant en 3x8 parmi les équipes PIT
-    et les sépare complètement du reste des employés PIT. Cela permet:
+    Cette fonction identifie les employés travaillant en 3x8 parmi les équipes TIP
+    et les sépare complètement du reste des employés TIP. Cela permet:
     1. D'analyser spécifiquement les employés en 3x8 avec leurs propres statistiques
-    2. D'exclure complètement les employés 3x8 des statistiques PIT
+    2. D'exclure complètement les employés 3x8 des statistiques TIP
     
     Args:
         df (pd.DataFrame): DataFrame source complet
-        df_equipe_pit (pd.DataFrame, optional): DataFrame des équipes PIT déjà préparé
+        df_equipe_tip (pd.DataFrame, optional): DataFrame des équipes TIP déjà préparé
         
     Returns:
         pd.DataFrame: DataFrame des employés travaillant en 3x8 (toutes leurs données)
-        pd.DataFrame: DataFrame des employés PIT standard (sans les employés 3x8)
+        pd.DataFrame: DataFrame des employés TIP standard (sans les employés 3x8)
     """
     from .calculateurs_3x8 import est_horaire_3x8
     import pandas as pd
     
-    # Si df_equipe_pit n'est pas fourni, on le prépare
-    if df_equipe_pit is None:
-        df_equipe_pit = preparer_donnees_pit(df)
+    # Si df_equipe_tip n'est pas fourni, on le prépare
+    if df_equipe_tip is None:
+        df_equipe_tip = preparer_donnees_tip(df)
     
-    if df_equipe_pit.empty:
-        return pd.DataFrame(), df_equipe_pit
+    if df_equipe_tip.empty:
+        return pd.DataFrame(), df_equipe_tip
     
     # Créer une copie pour éviter de modifier l'original
-    df_pit_copy = df_equipe_pit.copy()
+    df_tip_copy = df_equipe_tip.copy()
     
     # Identifier les lignes qui correspondent à des horaires 3x8
-    df_pit_copy['Est_3x8'] = df_pit_copy.apply(est_horaire_3x8, axis=1)
+    df_tip_copy['Est_3x8'] = df_tip_copy.apply(est_horaire_3x8, axis=1)
     
     # Identifier les employés qui ont au moins un jour en 3x8
-    employes_3x8 = df_pit_copy[df_pit_copy['Est_3x8'] == True]['Gentile'].unique()
+    employes_3x8 = df_tip_copy[df_tip_copy['Est_3x8'] == True]['Gentile'].unique()
     
     # Extraire TOUTES les données des employés qui font du 3x8 (pas seulement les jours 3x8)
-    df_employes_3x8 = df_pit_copy[df_pit_copy['Gentile'].isin(employes_3x8)].copy()
+    df_employes_3x8 = df_tip_copy[df_tip_copy['Gentile'].isin(employes_3x8)].copy()
     
     # Garder uniquement les employés qui ne font jamais de 3x8
-    df_employes_pit_standard = df_pit_copy[~df_pit_copy['Gentile'].isin(employes_3x8)].copy()
+    df_employes_tip_standard = df_tip_copy[~df_tip_copy['Gentile'].isin(employes_3x8)].copy()
     
     # Nettoyer les DataFrames en supprimant la colonne temporaire
     if 'Est_3x8' in df_employes_3x8.columns:
         df_employes_3x8 = df_employes_3x8.drop(columns=['Est_3x8'])
     
-    if 'Est_3x8' in df_employes_pit_standard.columns:
-        df_employes_pit_standard = df_employes_pit_standard.drop(columns=['Est_3x8'])
+    if 'Est_3x8' in df_employes_tip_standard.columns:
+        df_employes_tip_standard = df_employes_tip_standard.drop(columns=['Est_3x8'])
     
-    return df_employes_3x8, df_employes_pit_standard 
+    return df_employes_3x8, df_employes_tip_standard 

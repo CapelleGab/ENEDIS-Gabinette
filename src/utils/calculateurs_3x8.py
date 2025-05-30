@@ -102,40 +102,40 @@ def identifier_type_poste_3x8(row):
         return None
 
 
-def separer_donnees_3x8_et_pit(df_pit):
+def separer_donnees_3x8_et_tip(df_tip):
     """
-    Sépare les données entre jours en horaires 3x8 et jours en horaires PIT standard.
-    Un employé peut être à la fois en 3x8 certains jours et en PIT standard d'autres jours.
+    Sépare les données entre jours en horaires 3x8 et jours en horaires TIP standard.
+    Un employé peut être à la fois en 3x8 certains jours et en TIP standard d'autres jours.
     
     Args:
-        df_pit: DataFrame contenant les données PIT
+        df_tip: DataFrame contenant les données TIP
         
     Returns:
-        tuple: (DataFrame des jours en 3x8, DataFrame des jours en PIT standard)
+        tuple: (DataFrame des jours en 3x8, DataFrame des jours en TIP standard)
     """
-    if df_pit.empty:
-        return pd.DataFrame(), df_pit
+    if df_tip.empty:
+        return pd.DataFrame(), df_tip
     
-    # Créer une copie du DataFrame PIT
-    df_pit_copy = df_pit.copy()
+    # Créer une copie du DataFrame TIP
+    df_tip_copy = df_tip.copy()
     
     # Identifier les lignes qui correspondent à des horaires 3x8
-    df_pit_copy['Est_3x8'] = df_pit_copy.apply(est_horaire_3x8, axis=1)
+    df_tip_copy['Est_3x8'] = df_tip_copy.apply(est_horaire_3x8, axis=1)
     
     # Extraire les lignes qui correspondent à des horaires 3x8
-    df_jours_3x8 = df_pit_copy[df_pit_copy['Est_3x8'] == True].copy()
+    df_jours_3x8 = df_tip_copy[df_tip_copy['Est_3x8'] == True].copy()
     
-    # Garder uniquement les lignes qui ne correspondent pas à des horaires 3x8 pour le PIT standard
-    df_jours_pit_standard = df_pit_copy[df_pit_copy['Est_3x8'] == False].copy()
+    # Garder uniquement les lignes qui ne correspondent pas à des horaires 3x8 pour le TIP standard
+    df_jours_tip_standard = df_tip_copy[df_tip_copy['Est_3x8'] == False].copy()
     
     # Nettoyer les DataFrames en supprimant la colonne temporaire
     if 'Est_3x8' in df_jours_3x8.columns:
         df_jours_3x8 = df_jours_3x8.drop(columns=['Est_3x8'])
     
-    if 'Est_3x8' in df_jours_pit_standard.columns:
-        df_jours_pit_standard = df_jours_pit_standard.drop(columns=['Est_3x8'])
+    if 'Est_3x8' in df_jours_tip_standard.columns:
+        df_jours_tip_standard = df_jours_tip_standard.drop(columns=['Est_3x8'])
     
-    return df_jours_3x8, df_jours_pit_standard
+    return df_jours_3x8, df_jours_tip_standard
 
 
 def calculer_heures_travaillees_avec_unite(row):

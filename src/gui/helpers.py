@@ -68,15 +68,16 @@ Auteur : CAPELLE Gabin - Enedis"""
     messagebox.showinfo("Aide", help_text)
 
 
-def show_success_message(stats_final, moyennes_equipe, stats_pit=None, moyennes_pit=None, stats_3x8=None, moyennes_3x8=None):
-    """Affiche le message de succès après traitement."""
-    message = (f"✅ Analyse terminée avec succès !\n\n"
-               f"• {len(stats_final)} employés analysés (astreinte)\n"
-               f"• {len(moyennes_equipe)} équipes traitées (astreinte)")
+def show_success_message(stats_final, moyennes_equipe, stats_tip=None, moyennes_tip=None, stats_3x8=None, moyennes_3x8=None):
+    """Affiche un message de succès avec les statistiques."""
+    message = (f"✅ Traitement terminé avec succès !\n\n"
+               f"📊 Résultats :\n"
+               f"• {len(stats_final)} employés analysés (Astreinte)\n"
+               f"• {len(moyennes_equipe)} équipes traitées (Astreinte)")
     
-    if stats_pit is not None and moyennes_pit is not None:
-        message += (f"\n• {len(stats_pit)} employés analysés (PIT)\n"
-                   f"• {len(moyennes_pit)} équipes traitées (PIT)")
+    if stats_tip is not None and moyennes_tip is not None:
+        message += (f"\n• {len(stats_tip)} employés analysés (TIP)\n"
+                   f"• {len(moyennes_tip)} équipes traitées (TIP)")
     
     if stats_3x8 is not None and moyennes_3x8 is not None:
         message += (f"\n• {len(stats_3x8)} employés analysés (3x8)\n"

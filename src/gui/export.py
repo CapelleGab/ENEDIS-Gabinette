@@ -8,6 +8,7 @@ import os
 import datetime
 from tkinter import filedialog, messagebox
 from src.utils.excel_writer import sauvegarder_excel
+import pandas as pd
 
 
 class ExportManager:
@@ -16,54 +17,31 @@ class ExportManager:
     def __init__(self, log_manager):
         self.log_manager = log_manager
     
-    def export_to_excel(self, stats_final, moyennes_equipe, csv_file_path, stats_pit=None, moyennes_pit=None, stats_3x8=None, moyennes_3x8=None):
-        """Exporte les résultats vers Excel avec choix du dossier de destination."""
+    def export_to_excel(self, stats_final, moyennes_equipe, csv_file_path, stats_tip=None, moyennes_tip=None, stats_3x8=None, moyennes_3x8=None):
+        """Exporte les données vers Excel."""
         if stats_final is None or moyennes_equipe is None:
             messagebox.showerror("Erreur", "Aucune donnée à exporter.")
             return False
         
         try:
-            # Proposer un nom de fichier par défaut basé sur la date
-            date_str = datetime.datetime.now().strftime("%Y%m%d_%H%M")
-            default_filename = f"Statistiques_PMT_{date_str}.xlsx"
-            
-            # Proposer le dossier Documents par défaut (plus sûr sur macOS)
-            home_dir = os.path.expanduser("~")
-            documents_dir = os.path.join(home_dir, "Documents")
-            if not os.path.exists(documents_dir):
-                documents_dir = home_dir  # Fallback vers le dossier utilisateur
-            
-            # Ouvrir la boîte de dialogue pour choisir l'emplacement et le nom
+            # Demander à l'utilisateur où sauvegarder
             file_path = filedialog.asksaveasfilename(
-                title="Enregistrer le fichier Excel",
+                title="Sauvegarder le fichier Excel",
                 defaultextension=".xlsx",
-                filetypes=[
-                    ("Fichiers Excel", "*.xlsx"),
-                    ("Tous les fichiers", "*.*")
-                ],
-                initialfile=default_filename,
-                initialdir=documents_dir
+                filetypes=[("Fichiers Excel", "*.xlsx"), ("Tous les fichiers", "*.*")],
+                initialfile=f"Statistiques_PMT_{pd.Timestamp.now().strftime('%Y%m%d_%H%M')}.xlsx"
             )
             
             if not file_path:
-                # L'utilisateur a annulé
                 return False
             
-            # Vérifier les permissions d'écriture avant de tenter l'export
-            if not self._check_write_permissions(file_path):
-                return False
+            # Sauvegarder les données
+            sauvegarder_excel(stats_final, moyennes_equipe, file_path, stats_tip, moyennes_tip, stats_3x8, moyennes_3x8)
             
-            # Si le fichier existe déjà, vérifier qu'il n'est pas ouvert
-            if not self._check_file_not_locked(file_path):
-                return False
-            
-            # Exporter vers le fichier choisi
-            sauvegarder_excel(stats_final, moyennes_equipe, file_path, stats_pit, moyennes_pit, stats_3x8, moyennes_3x8)
-            
-            # Message de succès avec le chemin complet
-            content_msg = f"📊 Contenu : {len(stats_final)} employés, {len(moyennes_equipe)} équipes"
-            if stats_pit is not None and moyennes_pit is not None:
-                content_msg += f"\n📊 PIT : {len(stats_pit)} employés, {len(moyennes_pit)} équipes"
+            # Message de confirmation
+            content_msg = f"📊 Astreinte : {len(stats_final)} employés, {len(moyennes_equipe)} équipes"
+            if stats_tip is not None and moyennes_tip is not None:
+                content_msg += f"\n📊 TIP : {len(stats_tip)} employés, {len(moyennes_tip)} équipes"
             if stats_3x8 is not None and moyennes_3x8 is not None:
                 content_msg += f"\n🔄 3x8 : {len(stats_3x8)} employés, {len(moyennes_3x8)} équipes"
             
