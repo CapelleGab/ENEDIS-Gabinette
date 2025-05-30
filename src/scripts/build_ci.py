@@ -103,6 +103,8 @@ a = Analysis(
         'src.utils.filtres',
         'src.utils.horaires',
         'src.utils.excel_writer',
+        'src.utils.calculateurs_3x8',
+        'src.utils.remover',
         'pandas._libs.tslibs.timedeltas',
         'pandas._libs.tslibs.np_datetime',
         'pandas._libs.tslibs.nattype',
@@ -173,6 +175,12 @@ app = BUNDLE(
 def create_spec_file_windows(icon_path=None):
     """Crée un fichier .spec optimisé pour Windows."""
     
+    # Gérer l'icône correctement
+    if icon_path:
+        icon_line = f"    icon='{icon_path}',"
+    else:
+        icon_line = "    icon=None,"
+    
     spec_content = f'''# -*- mode: python ; coding: utf-8 -*-
 
 import os
@@ -221,6 +229,8 @@ a = Analysis(
         'src.utils.horaires',
         'src.utils.excel_writer',
         'pandas._libs.tslibs.timedeltas',
+        'src.utils.calculateurs_3x8',
+        'src.utils.remover',
         'pandas._libs.tslibs.np_datetime',
         'pandas._libs.tslibs.nattype',
         'pandas._libs.properties',
@@ -260,7 +270,7 @@ exe = EXE(
     target_arch=None,
     codesign_identity=None,
     entitlements_file=None,
-    icon='{icon_path if icon_path else None}',
+{icon_line}
 )
 '''
     
