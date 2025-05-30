@@ -9,9 +9,10 @@ from .data_loader import charger_donnees_csv, preparer_donnees, preparer_donnees
 from .horaires import get_horaire_final, verifier_horaire_reference, analyser_horaires_disponibles
 from .filtres import appliquer_filtres_base, appliquer_filtres_astreinte
 from .calculateurs import calculer_statistiques_employes, calculer_moyennes_equipe
-from .calculateurs_3x8 import est_horaire_3x8, identifier_type_poste_3x8, calculer_statistiques_3x8, calculer_moyennes_equipe_3x8
+from .calculateurs_3x8 import est_horaire_3x8, identifier_type_poste_3x8, calculer_statistiques_3x8, calculer_moyennes_equipe_3x8, calculer_heures_travaillees_avec_unite
 from .formatters import formater_donnees_finales, analyser_codes_presence
 from .excel_writer import sauvegarder_excel
+from .remover import supprimer_astreinte_insuffisants, supprimer_pit_insuffisants, supprimer_3x8_insuffisants
 
 
 __all__ = [
@@ -31,7 +32,11 @@ __all__ = [
     'identifier_type_poste_3x8',
     'calculer_statistiques_3x8',
     'calculer_moyennes_equipe_3x8',
+    'calculer_heures_travaillees_avec_unite',
     'formater_donnees_finales',
     'analyser_codes_presence',
-    'sauvegarder_excel'
+    'sauvegarder_excel',
+    'supprimer_astreinte_insuffisants',
+    'supprimer_pit_insuffisants',
+    'supprimer_3x8_insuffisants'
 ] 

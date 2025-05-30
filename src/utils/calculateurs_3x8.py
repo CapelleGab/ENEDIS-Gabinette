@@ -138,6 +138,57 @@ def separer_donnees_3x8_et_pit(df_pit):
     return df_jours_3x8, df_jours_pit_standard
 
 
+def calculer_heures_travaillees_avec_unite(row):
+    """
+    Calcule les heures travaillées en tenant compte de l'unité dans "Dés. unité".
+    
+    Args:
+        row: Ligne du DataFrame
+        
+    Returns:
+        float: Nombre d'heures travaillées
+    """
+    try:
+        # Si on a un code (absence ou autre)
+        if pd.notna(row.get('Code', '')) and row.get('Code', '') not in ['', ' ']:
+            # Cas spécial : code "80TH" = 8 heures travaillées
+            if str(row.get('Code', '')).strip().upper() == '80TH':
+                return 8.0
+            
+            # Si on a une valeur numérique avec le code
+            if pd.notna(row.get('Valeur', '')) and row.get('Valeur', '') != '':
+                valeur = float(row.get('Valeur', 0))
+                if valeur >= 0:
+                    # Vérifier l'unité dans la colonne "Dés. unité"
+                    unite = str(row.get('Dés. unité', '')).strip().lower() if pd.notna(row.get('Dés. unité', '')) else ''
+                    
+                    if 'jour' in unite:
+                        # Si l'unité est en jours : valeur = nombre de jours travaillés
+                        # Exemple: 1 jour travaillé = 8h travaillées
+                        heures_travaillees = valeur * 8.0
+                        return min(8.0, heures_travaillees)  # Maximum 8 heures par jour
+                    elif 'heure' in unite:
+                        # Si l'unité est en heures : valeur = nombre d'heures travaillées
+                        # Exemple: 6 heures travaillées
+                        return min(8.0, valeur)  # Maximum 8 heures par jour
+                    else:
+                        # Si pas d'unité : valeur = nombre d'heures d'absence (ancien comportement)
+                        # Exemple: 2 heures d'absence = 8-2 = 6h travaillées
+                        heures_travaillees = 8.0 - valeur
+                        return max(0, heures_travaillees)  # Minimum 0 heures
+                else:
+                    return 8.0  # Valeur négative = journée complète
+            else:
+                # Code d'absence sans valeur = 8h d'absence = 0h travaillées
+                return 0.0
+        else:
+            # Pas de code = journée complète travaillée
+            return 8.0
+    except (ValueError, TypeError):
+        # Si conversion impossible, considérer comme journée complète
+        return 8.0
+
+
 def calculer_statistiques_3x8(df_3x8):
     """
     Calcule les statistiques pour les employés 3x8, incluant le nombre de postes 
@@ -171,46 +222,24 @@ def calculer_statistiques_3x8(df_3x8):
     # Ajouter la colonne du type de poste 3x8
     df_3x8_filtre['Type_Poste'] = df_3x8_filtre.apply(identifier_type_poste_3x8, axis=1)
     
+    # Calculer les heures travaillées avec gestion des unités
+    df_3x8_filtre['Heures_Travaillees'] = df_3x8_filtre.apply(calculer_heures_travaillees_avec_unite, axis=1)
+    
+    # Calculer la fraction de jour travaillé
+    df_3x8_filtre['Fraction_Jour_Travaille'] = df_3x8_filtre['Heures_Travaillees'] / 8.0
+    
     # Calculer les jours d'absences et les jours travaillés
     if 'Code' in df_3x8_filtre.columns and 'Valeur' in df_3x8_filtre.columns:
-        # Un jour est considéré comme une absence complète si:
-        # 1. Il y a un code de présence ET
-        # 2. La valeur est de 8 heures (journée complète) ou n'est pas renseignée
-        df_3x8_filtre['Est_Absent_Complet'] = (
-            (pd.notna(df_3x8_filtre['Code']) & (df_3x8_filtre['Code'] != '') & (df_3x8_filtre['Code'] != ' ')) & 
-            ((pd.notna(df_3x8_filtre['Valeur']) & (df_3x8_filtre['Valeur'] == 8.0)) | 
-             (pd.isna(df_3x8_filtre['Valeur'])))
-        )
-        
-        # Calculer la fraction de jour travaillé pour les absences partielles
-        df_3x8_filtre['Fraction_Jour_Travaille'] = 1.0  # Par défaut, jour complet travaillé
-        
-        # Pour les lignes avec un code et une valeur < 8, calculer la fraction travaillée
-        mask_absence_partielle = (
-            (pd.notna(df_3x8_filtre['Code']) & (df_3x8_filtre['Code'] != '') & (df_3x8_filtre['Code'] != ' ')) & 
-            (pd.notna(df_3x8_filtre['Valeur']) & (df_3x8_filtre['Valeur'] < 8.0))
-        )
-        
-        # Formule: (8 - Valeur) / 8
-        # Exemple: Si Valeur = 2 (2h d'absence), alors la fraction travaillée = (8-2)/8 = 0.75
-        df_3x8_filtre.loc[mask_absence_partielle, 'Fraction_Jour_Travaille'] = (
-            (8.0 - df_3x8_filtre.loc[mask_absence_partielle, 'Valeur']) / 8.0
-        )
-        
-        # Les jours d'absence complète ont une fraction travaillée de 0
-        df_3x8_filtre.loc[df_3x8_filtre['Est_Absent_Complet'], 'Fraction_Jour_Travaille'] = 0.0
+        # Un jour est considéré comme une absence complète si les heures travaillées = 0
+        df_3x8_filtre['Est_Absent_Complet'] = (df_3x8_filtre['Heures_Travaillees'] == 0.0)
     else:
         # Si les colonnes n'existent pas, considérer qu'il n'y a pas d'absence
         df_3x8_filtre['Est_Absent_Complet'] = False
-        df_3x8_filtre['Fraction_Jour_Travaille'] = 1.0
     
     # Calculer les statistiques par employé
     stats = df_3x8_filtre.groupby(['Gentile', 'Equipe (Lib.)', 'Nom', 'Prénom']).agg(
         # Nombre total de jours (présent + absent)
         Total_Jours=('Jour', 'count'),
-        
-        # Nombre de jours d'absence complète
-        Jours_Absents_Complets=('Est_Absent_Complet', 'sum'),
         
         # Somme des fractions de jours travaillés
         Jours_Travailles_Effectifs=('Fraction_Jour_Travaille', 'sum'),
@@ -224,15 +253,15 @@ def calculer_statistiques_3x8(df_3x8):
         # Nombre de postes de nuit
         Postes_Nuit=('Type_Poste', lambda x: (x == 'nuit').sum()),
         
-        # Somme des heures travaillées (fraction_jour * 8 heures)
-        Total_Heures_Travaillées=('Fraction_Jour_Travaille', lambda x: x.sum() * 8.0)
+        # Somme des heures travaillées
+        Total_Heures_Travaillées=('Heures_Travaillees', 'sum')
     ).reset_index()
     
     # Calculer le nombre de jours d'absence partielle
-    stats['Jours_Absents_Partiels'] = stats['Total_Jours'] - stats['Jours_Absents_Complets'] - stats['Jours_Travailles_Effectifs']
+    stats['Jours_Absents_Partiels'] = stats['Total_Jours'] - stats['Jours_Travailles_Effectifs']
     
-    # Calculer le nombre total de jours d'absence (complets + partiels)
-    stats['Total_Jours_Absents'] = stats['Jours_Absents_Complets'] + stats['Jours_Absents_Partiels']
+    # Calculer le nombre total de jours d'absence (partiels seulement)
+    stats['Total_Jours_Absents'] = stats['Jours_Absents_Partiels']
     
     # Renommer les colonnes pour plus de clarté
     stats = stats.rename(columns={
@@ -243,7 +272,7 @@ def calculer_statistiques_3x8(df_3x8):
     # Réorganiser les colonnes
     colonnes_ordre = [
         'Nom', 'Prénom', 'Équipe', 
-        'Jours_Travaillés', 'Jours_Absents_Complets', 'Jours_Absents_Partiels',
+        'Jours_Travaillés', 'Jours_Absents_Partiels',
         'Total_Jours_Absents', 'Total_Jours',
         'Postes_Matin', 'Postes_Apres_Midi', 'Postes_Nuit',
         'Total_Heures_Travaillées'
@@ -273,7 +302,6 @@ def calculer_moyennes_equipe_3x8(stats_3x8):
     moyennes = stats_3x8.groupby('Équipe').agg(
         Nb_Employés=('Nom', 'count'),
         Moy_Jours_Travaillés=('Jours_Travaillés', 'mean'),
-        Moy_Jours_Absents_Complets=('Jours_Absents_Complets', 'mean'),
         Moy_Jours_Absents_Partiels=('Jours_Absents_Partiels', 'mean'),
         Moy_Total_Jours_Absents=('Total_Jours_Absents', 'mean'),
         Moy_Total_Jours=('Total_Jours', 'mean'),
@@ -296,7 +324,7 @@ def calculer_moyennes_equipe_3x8(stats_3x8):
     
     # Arrondir les colonnes numériques à 2 décimales
     colonnes_moyennes = [
-        'Moy_Jours_Travaillés', 'Moy_Jours_Absents_Complets', 'Moy_Jours_Absents_Partiels',
+        'Moy_Jours_Travaillés', 'Moy_Jours_Absents_Partiels',
         'Moy_Total_Jours_Absents', 'Moy_Total_Jours',
         'Moy_Postes_Matin', 'Moy_Postes_Apres_Midi', 'Moy_Postes_Nuit',
         'Moy_Heures_Travaillées'
@@ -306,7 +334,7 @@ def calculer_moyennes_equipe_3x8(stats_3x8):
     # Réorganiser les colonnes
     colonnes_ordre = [
         'Équipe', 'Nb_Employés',
-        'Moy_Jours_Travaillés', 'Moy_Jours_Absents_Complets', 'Moy_Jours_Absents_Partiels',
+        'Moy_Jours_Travaillés', 'Moy_Jours_Absents_Partiels',
         'Moy_Total_Jours_Absents', 'Moy_Total_Jours',
         'Moy_Postes_Matin', 'Moy_Postes_Apres_Midi', 'Moy_Postes_Nuit',
         'Moy_Heures_Travaillées',

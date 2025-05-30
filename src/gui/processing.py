@@ -21,7 +21,10 @@ from src.utils import (
     calculer_statistiques_3x8,
     calculer_moyennes_equipe_3x8,
     formater_donnees_finales,
-    analyser_codes_presence
+    analyser_codes_presence,
+    supprimer_astreinte_insuffisants,
+    supprimer_pit_insuffisants,
+    supprimer_3x8_insuffisants
 )
 
 
@@ -62,6 +65,9 @@ class DataProcessor:
             
             self.log_manager.log_message("🔄 Formatage des données finales...")
             stats_final = formater_donnees_finales(stats_employes)
+            
+            self.log_manager.log_message("🔄 Suppression des employés d'astreinte avec moins de 50 jours présents complets...")
+            stats_final = supprimer_astreinte_insuffisants(stats_final)
             
             self.log_manager.log_message("🔄 Calcul des moyennes par équipe...")
             moyennes_equipe = calculer_moyennes_equipe(stats_final)
@@ -105,11 +111,14 @@ class DataProcessor:
                     df_filtre_pit = appliquer_filtres_base(df_unique_pit)
                     self.log_manager.log_message(f"✅ {len(df_filtre_pit)} lignes PIT après filtrage")
                     
-                    self.log_manager.log_message("�� Calcul des statistiques par employé PIT...")
+                    self.log_manager.log_message("🔄 Calcul des statistiques par employé PIT...")
                     stats_employes_pit = calculer_statistiques_employes(df_filtre_pit)
                     
                     self.log_manager.log_message("🔄 Formatage des données finales PIT...")
                     stats_final_pit = formater_donnees_finales(stats_employes_pit)
+                    
+                    self.log_manager.log_message("🔄 Suppression des employés PIT avec moins de 55 jours présents complets...")
+                    stats_final_pit = supprimer_pit_insuffisants(stats_final_pit)
                     
                     self.log_manager.log_message("🔄 Calcul des moyennes par équipe PIT...")
                     moyennes_equipe_pit = calculer_moyennes_equipe(stats_final_pit)
@@ -127,6 +136,9 @@ class DataProcessor:
                     # Calcul des statistiques spécifiques 3x8 (jours travaillés, absences, postes)
                     self.log_manager.log_message("🔄 Calcul des statistiques spécifiques 3x8...")
                     stats_final_3x8 = calculer_statistiques_3x8(df_unique_3x8)
+                    
+                    self.log_manager.log_message("🔄 Suppression des employés 3x8 selon les critères spécifiques...")
+                    stats_final_3x8 = supprimer_3x8_insuffisants(stats_final_3x8)
                     
                     self.log_manager.log_message("🔄 Calcul des moyennes par équipe 3x8...")
                     moyennes_equipe_3x8 = calculer_moyennes_equipe_3x8(stats_final_3x8)

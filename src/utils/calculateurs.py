@@ -10,7 +10,11 @@ import pandas as pd
 def calculer_heures_travaillees(row):
     """
     Calcule les heures travaillées selon la logique corrigée :
-    - Si la valeur existe et est numérique : 8 - valeur
+    - Si code "80TH" : 8 heures travaillées (journée complète)
+    - Si la valeur existe et est numérique : 
+      * Si unité = "Heure(s)" : valeur = heures travaillées (ex: 6 heures travaillées)
+      * Si unité = "Jour(s)" : valeur * 8 = heures travaillées (ex: 1 jour = 8h travaillées)
+      * Si pas d'unité : 8 - valeur (comportement par défaut pour les absences)
     - Si code d'absence sans valeur : 0 heures travaillées (8h d'absence)
     - Si pas de code ou valeur invalide : 8 heures travaillées (journée complète)
     
@@ -23,12 +27,31 @@ def calculer_heures_travaillees(row):
     try:
         # Si on a un code (absence ou autre)
         if pd.notna(row['Code']) and row['Code'] not in ['', ' ']:
+            # Cas spécial : code "80TH" = 8 heures travaillées
+            if str(row['Code']).strip().upper() == '80TH':
+                return 8.0
+            
             # Si on a une valeur numérique avec le code
             if pd.notna(row['Valeur']) and row['Valeur'] != '':
                 valeur = float(row['Valeur'])
                 if valeur >= 0:
-                    heures_travaillees = 8.0 - valeur
-                    return max(0, heures_travaillees)  # Minimum 0 heures
+                    # Vérifier l'unité dans la colonne "Dés. unité"
+                    unite = str(row.get('Dés. unité', '')).strip().lower() if pd.notna(row.get('Dés. unité', '')) else ''
+                    
+                    if 'jour' in unite:
+                        # Si l'unité est en jours : valeur = nombre de jours travaillés
+                        # Exemple: 1 jour travaillé = 8h travaillées
+                        heures_travaillees = valeur * 8.0
+                        return min(8.0, heures_travaillees)  # Maximum 8 heures par jour
+                    elif 'heure' in unite:
+                        # Si l'unité est en heures : valeur = nombre d'heures travaillées
+                        # Exemple: 6 heures travaillées
+                        return min(8.0, valeur)  # Maximum 8 heures par jour
+                    else:
+                        # Si pas d'unité : valeur = nombre d'heures d'absence (ancien comportement)
+                        # Exemple: 2 heures d'absence = 8-2 = 6h travaillées
+                        heures_travaillees = 8.0 - valeur
+                        return max(0, heures_travaillees)  # Minimum 0 heures
                 else:
                     return 8.0  # Valeur négative = journée complète
             else:

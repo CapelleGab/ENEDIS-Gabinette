@@ -33,7 +33,7 @@ def sauvegarder_excel(stats_final, moyennes_equipe, fichier_path=None, stats_pit
         # Feuilles pour les équipes PIT (hors astreinte) si les données sont fournies
         if stats_pit is not None and moyennes_pit is not None:
             stats_pit.to_excel(writer, sheet_name=NOMS_FEUILLES['pit_statistiques'], index=False)
-            moyennes_pit.to_excel(writer, sheet_name=NOMS_FEUILLES['pit_moyennes'], index=False)
+            moyennes_pit.to_excel(writer, sheet_name=NOMS_FEUILLES['pit_moyennes'], index=False) 
         
         # Feuilles pour les équipes 3x8 si les données sont fournies
         if stats_3x8 is not None and moyennes_3x8 is not None:

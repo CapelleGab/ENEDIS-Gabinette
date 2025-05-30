@@ -132,7 +132,7 @@ def supprimer_doublons(df):
     Returns:
         pd.DataFrame: DataFrame sans doublons
     """
-    return df.drop_duplicates(subset=['Gentile', 'Jour'], keep='first').copy()
+    return df.drop_duplicates(subset=['Gentile', 'Jour'], keep='first').copy() 
 
 
 def preparer_donnees_3x8(df, df_equipe_pit=None):
