@@ -2,19 +2,19 @@
 
 ## 🎯 Présentation
 
-**PMT Analytics** analyse automatiquement les fichiers CSV de planning journalier Enedis et génère des statistiques détaillées sur la présence et les heures travaillées des employés pour les équipes d'astreinte et PIT (hors astreinte).
+**PMT Analytics** analyse automatiquement les fichiers CSV de planning journalier Enedis et génère des statistiques détaillées sur la présence et les heures travaillées des employés pour les équipes d'astreinte, TIP (hors astreinte) et 3x8.
 
 ## 🚀 Installation
 
 ### macOS
 
-1. Téléchargez `PMTAnalytics_v1.0.0_macOS.zip`
+1. Téléchargez `PMTAnalytics_v2.0.0_macOS.zip`
 2. Décompressez et lancez `PMTAnalytics.app`
 3. Si macOS bloque l'app : Clic droit → "Ouvrir" → Confirmer
 
 ### Windows
 
-1. Téléchargez `PMTAnalytics_v1.0.0_Windows.zip`
+1. Téléchargez `PMTAnalytics_v2.0.0_Windows.zip`
 2. Décompressez et lancez `PMTAnalytics.exe`
 
 ## 📋 Utilisation
@@ -34,7 +34,23 @@
 4. **Cliquez** "🚀 Lancer l'analyse"
 5. **Consultez** les résultats affichés
 
-### 3. Export Excel
+### 3. Export des résultats
+
+#### 📄 Export du résumé (NOUVEAU v2.0.0)
+
+1. **Cliquez** "📄 Exporter le résumé"
+2. **Choisissez** l'emplacement (Documents recommandé)
+3. **Nommez** le fichier (ex: `Resume_PMT_Mai2025.txt`)
+4. **Enregistrez**
+
+Le fichier texte contiendra :
+
+- 📈 Statistiques générales
+- 🏆 Top employés par catégorie
+- 📋 Répartition par équipe
+- 📊 Détails spécifiques 3x8 (postes, absences)
+
+#### 💾 Export Excel (données complètes)
 
 1. **Cliquez** "💾 Exporter vers Excel"
 2. **Choisissez** l'emplacement (Documents recommandé)
@@ -52,13 +68,20 @@
 - 🏢 Meilleure équipe
 - 📋 Répartition par équipe
 
-**Équipes PIT (hors astreinte) :**
+**Équipes TIP (hors astreinte) :**
 
-- 📈 Statistiques générales PIT
-- 🏆 Top 3 employés PIT par heures
-- 📋 Répartition par équipe PIT
+- 📈 Statistiques générales TIP
+- 🏆 Top 3 employés TIP par heures
+- 📋 Répartition par équipe TIP
 
-### Fichier Excel (4 feuilles)
+**Équipes 3x8 :**
+
+- 📅 Statistiques de présence
+- ⏰ Répartition des postes (matin/après-midi/nuit)
+- 🏆 Top employés par jours travaillés
+- 📋 Moyennes par équipe
+
+### Fichier Excel (6 feuilles)
 
 **ASTREINTE_STATS - Statistiques Employés (astreinte) :**
 
@@ -74,16 +97,27 @@
 - Nombre d'employés
 - Comparaisons
 
-**PIT_STATS - Statistiques Employés (hors astreinte) :**
+**TIP_STATS - Statistiques Employés (hors astreinte) :**
 
 - Mêmes colonnes que pour l'astreinte
-- Équipes PIT uniquement
+- Équipes TIP uniquement
 
-**PIT_EQUIPE_MOYENNES - Moyennes par Équipe (hors astreinte) :**
+**TIP_EQUIPE_MOYENNES - Moyennes par Équipe (hors astreinte) :**
 
-- Stats moyennes par équipe PIT
-- Nombre d'employés PIT
-- Comparaisons PIT
+- Stats moyennes par équipe TIP
+- Nombre d'employés TIP
+- Comparaisons TIP
+
+**3x8_STATS - Statistiques Employés (3x8) :**
+
+- Jours travaillés, absences partielles
+- Nombre de postes par type (matin/après-midi/nuit)
+- Total jours d'absence
+
+**3x8_EQUIPES_MOYENNES - Moyennes par Équipe (3x8) :**
+
+- Moyennes par équipe 3x8
+- Totaux des postes par équipe
 
 ## ⚙️ Équipes analysées
 
@@ -91,10 +125,25 @@
 
 - PV IT ASTREINTE, PV B ASTREINTE, PV G ASTREINTE, PV PE ASTREINTE
 
-**Équipes PIT - Hors astreinte (6) :**
+**Équipes TIP - Hors astreinte (6) :**
 
 - PV B SANS ASTREINTE, PV B TERRAIN, PV IT SANS ASTREINTE
 - PF IT TERRAIN, PV G SANS ASTREINTE, PV PE SANS ASTREINTE
+
+**Équipes 3x8 :**
+
+- Détection automatique des horaires 3x8
+- Matin : 7h30-15h30
+- Après-midi : 15h30-23h30
+- Nuit : 23h30-7h30
+
+## 🔧 Filtrage automatique (v2.0.0)
+
+L'application supprime automatiquement les employés avec des données insuffisantes :
+
+- **Astreinte** : < 50 jours présents complets
+- **TIP** : < 55 jours présents complets
+- **3x8** : Pas de filtrage appliqué
 
 ## 🔧 Paramètres
 
@@ -120,6 +169,6 @@
 
 ---
 
-**Version** : v1.1.0  
-**Dernière mise à jour** : Mai 2025  
+**Version** : v2.0.0  
+**Dernière mise à jour** : Janvier 2025  
 **Usage** : Interne Enedis uniquement

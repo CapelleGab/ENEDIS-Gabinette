@@ -36,11 +36,12 @@ class LogManager:
 
 def show_help():
     """Affiche l'aide de l'application."""
-    help_text = """📊 Aide - PMT Analytics
+    help_text = """📊 Aide - PMT Analytics v2.0.0
 
 🎯 OBJECTIF :
 Cette application analyse les fichiers CSV de planning journalier Enedis 
-et affiche un résumé détaillé des statistiques.
+et affiche un résumé détaillé des statistiques pour les équipes d'astreinte, 
+TIP (hors astreinte) et 3x8.
 
 📋 UTILISATION :
 1. Cliquez sur "🔍 Sélectionner le fichier CSV"
@@ -49,20 +50,27 @@ et affiche un résumé détaillé des statistiques.
 4. Consultez le résumé affiché dans le journal d'exécution
 
 💾 EXPORT :
-• "💾 Exporter vers Excel" : Choisissez l'emplacement et le nom du fichier
-• Le fichier Excel contiendra tous les détails par employé et par équipe
+• "💾 Exporter vers Excel" : Données complètes avec 6 feuilles détaillées
+• "📄 Exporter le résumé" : Résumé de l'analyse en fichier texte (NOUVEAU)
 • En cas d'erreur de permissions, essayez de sauvegarder dans Documents
 
 📊 RÉSUMÉ AFFICHÉ :
 • Statistiques générales (nombre d'employés, moyennes, etc.)
-• Top 5 des employés par heures travaillées
+• Top 5 des employés par heures travaillées (Astreinte)
+• Top 3 des employés TIP et 3x8
 • Meilleure équipe par performance
 • Répartition détaillée par équipe
+• Statistiques spécifiques 3x8 (postes matin/après-midi/nuit)
+
+🔧 FILTRAGE AUTOMATIQUE :
+• Astreinte : Supprime les employés avec < 50 jours présents complets
+• TIP : Supprime les employés avec < 55 jours présents complets
+• 3x8 : Pas de filtrage appliqué
 
 ⚙️ CONFIGURATION :
 Les paramètres (horaires, équipes, etc.) sont configurables dans le fichier config.py
 
-Version : v1.0.0
+Version : v2.0.0
 Auteur : CAPELLE Gabin - Enedis"""
     
     messagebox.showinfo("Aide", help_text)
@@ -83,7 +91,9 @@ def show_success_message(stats_final, moyennes_equipe, stats_tip=None, moyennes_
         message += (f"\n• {len(stats_3x8)} employés analysés (3x8)\n"
                    f"• {len(moyennes_3x8)} équipes traitées (3x8)")
     
-    message += "\n\n💾 Utilisez 'Exporter vers Excel' pour sauvegarder les résultats"
+    message += ("\n\n💾 OPTIONS D'EXPORT :\n"
+               "• 'Exporter vers Excel' : Données complètes et détaillées\n"
+               "• 'Exporter le résumé' : Résumé de l'analyse en texte")
     
     messagebox.showinfo("Traitement terminé", message)
 

@@ -419,7 +419,8 @@ class SummaryDisplayer:
         """Affiche le pied de page."""
         lines = [
             "💾 EXPORT",
-            "• Utilisez le bouton 'Exporter vers Excel' pour sauvegarder les résultats",
+            "• Utilisez le bouton 'Exporter vers Excel' pour sauvegarder les données complètes",
+            "• Utilisez le bouton 'Exporter le résumé' pour sauvegarder ce résumé en fichier texte",
             "• Le fichier Excel contiendra tous les détails par employé et par équipe",
             "",
             "="*60
