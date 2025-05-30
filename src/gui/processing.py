@@ -170,9 +170,12 @@ class SummaryDisplayer:
         self.log_manager = log_manager
     
     def display_summary(self, stats_final, moyennes_equipe, csv_file_path, stats_tip=None, moyennes_tip=None, stats_3x8=None, moyennes_3x8=None):
-        """Affiche le résumé de l'analyse dans le journal d'exécution."""
+        """Affiche le résumé de l'analyse dans le journal d'exécution et retourne le contenu."""
         if stats_final is None or moyennes_equipe is None:
-            return
+            return None
+        
+        # Liste pour capturer le contenu du résumé
+        summary_lines = []
         
         # Calculer les statistiques globales
         nb_employes = len(stats_final)
@@ -192,23 +195,26 @@ class SummaryDisplayer:
         if heures_col and not moyennes_equipe.empty:
             best_team = moyennes_equipe.loc[moyennes_equipe[heures_col].idxmax()]
         
-        # Afficher le résumé
-        self._display_header()
-        self._display_general_stats(nb_employes, nb_equipes, moy_heures, moy_jours, moy_presence)
-        self._display_top_employees(top_employes)
-        self._display_best_team(best_team, heures_col)
-        self._display_team_breakdown(moyennes_equipe, heures_col)
+        # Afficher le résumé et capturer le contenu
+        summary_lines.extend(self._display_header())
+        summary_lines.extend(self._display_general_stats(nb_employes, nb_equipes, moy_heures, moy_jours, moy_presence))
+        summary_lines.extend(self._display_top_employees(top_employes))
+        summary_lines.extend(self._display_best_team(best_team, heures_col))
+        summary_lines.extend(self._display_team_breakdown(moyennes_equipe, heures_col))
         
         # Afficher les statistiques TIP si disponibles
         if stats_tip is not None and moyennes_tip is not None:
-            self._display_tip_section(stats_tip, moyennes_tip, heures_col)
+            summary_lines.extend(self._display_tip_section(stats_tip, moyennes_tip, heures_col))
         
         # Afficher les statistiques 3x8 si disponibles
         if stats_3x8 is not None and moyennes_3x8 is not None:
-            self._display_3x8_section(stats_3x8, moyennes_3x8, heures_col)
+            summary_lines.extend(self._display_3x8_section(stats_3x8, moyennes_3x8, heures_col))
         
-        self._display_file_info(csv_file_path)
-        self._display_footer()
+        summary_lines.extend(self._display_file_info(csv_file_path))
+        summary_lines.extend(self._display_footer())
+        
+        # Retourner le contenu du résumé
+        return '\n'.join(summary_lines)
     
     def _find_hours_column(self, moyennes_equipe):
         """Trouve la colonne des heures travaillées."""
@@ -219,185 +225,205 @@ class SummaryDisplayer:
     
     def _display_header(self):
         """Affiche l'en-tête du résumé."""
-        self.log_manager.log_message("\n" + "="*60)
-        self.log_manager.log_message("📊 RÉSUMÉ DE L'ANALYSE DES STATISTIQUES PMT")
-        self.log_manager.log_message("="*60)
-        self.log_manager.log_message("")
+        lines = [
+            "\n" + "="*60,
+            "📊 RÉSUMÉ DE L'ANALYSE DES STATISTIQUES PMT",
+            "="*60,
+            ""
+        ]
+        for line in lines:
+            self.log_manager.log_message(line)
+        return lines
     
     def _display_general_stats(self, nb_employes, nb_equipes, moy_heures, moy_jours, moy_presence):
         """Affiche les statistiques générales."""
-        self.log_manager.log_message("📈 STATISTIQUES GÉNÉRALES")
-        self.log_manager.log_message(f"• Nombre d'employés analysés : {nb_employes}")
-        self.log_manager.log_message(f"• Nombre d'équipes : {nb_equipes}")
-        self.log_manager.log_message(f"• Moyenne d'heures travaillées par employé : {moy_heures:.1f}h")
-        self.log_manager.log_message(f"• Moyenne de jours travaillés par employé : {moy_jours:.1f} jours")
-        self.log_manager.log_message(f"• Taux de présence moyen : {moy_presence:.1f}%")
-        self.log_manager.log_message("")
+        lines = [
+            "📈 STATISTIQUES GÉNÉRALES",
+            f"• Nombre d'employés analysés : {nb_employes}",
+            f"• Nombre d'équipes : {nb_equipes}",
+            f"• Moyenne d'heures travaillées par employé : {moy_heures:.1f}h",
+            f"• Moyenne de jours travaillés par employé : {moy_jours:.1f} jours",
+            f"• Taux de présence moyen : {moy_presence:.1f}%",
+            ""
+        ]
+        for line in lines:
+            self.log_manager.log_message(line)
+        return lines
     
     def _display_top_employees(self, top_employes):
         """Affiche le top 5 des employés."""
-        self.log_manager.log_message("🏆 TOP 5 EMPLOYÉS (par heures travaillées)")
+        lines = ["🏆 TOP 5 EMPLOYÉS (par heures travaillées)"]
         for i, (_, emp) in enumerate(top_employes.iterrows(), 1):
-            self.log_manager.log_message(
-                f"{i}. {emp['Prénom']} {emp['Nom']} ({emp['Équipe']}) : {emp['Total_Heures_Travaillées']:.1f}h"
-            )
-        self.log_manager.log_message("")
+            lines.append(f"{i}. {emp['Prénom']} {emp['Nom']} ({emp['Équipe']}) : {emp['Total_Heures_Travaillées']:.1f}h")
+        lines.append("")
+        
+        for line in lines:
+            self.log_manager.log_message(line)
+        return lines
     
     def _display_best_team(self, best_team, heures_col):
         """Affiche la meilleure équipe."""
         if heures_col and best_team is not None:
-            self.log_manager.log_message("🏢 MEILLEURE ÉQUIPE (par moyenne d'heures)")
-            self.log_manager.log_message(f"• {best_team['Équipe']} : {best_team[heures_col]:.1f}h en moyenne")
+            lines = [
+                "🏢 MEILLEURE ÉQUIPE (par moyenne d'heures)",
+                f"• {best_team['Équipe']} : {best_team[heures_col]:.1f}h en moyenne"
+            ]
             if 'Nb_Employés' in best_team:
-                self.log_manager.log_message(f"• {best_team['Nb_Employés']:.0f} employés")
-            self.log_manager.log_message("")
+                lines.append(f"• {best_team['Nb_Employés']:.0f} employés")
+            lines.append("")
+            
+            for line in lines:
+                self.log_manager.log_message(line)
+            return lines
+        return []
     
     def _display_team_breakdown(self, moyennes_equipe, heures_col):
         """Affiche la répartition par équipe."""
-        self.log_manager.log_message("📋 RÉPARTITION PAR ÉQUIPE")
+        lines = ["📋 RÉPARTITION PAR ÉQUIPE"]
         for _, team in moyennes_equipe.iterrows():
             nb_emp = team.get('Nb_Employés', 'N/A')
             if heures_col:
                 heures_moy = team[heures_col]
-                self.log_manager.log_message(f"• {team['Équipe']} : {nb_emp} employés, {heures_moy:.1f}h moy.")
+                lines.append(f"• {team['Équipe']} : {nb_emp} employés, {heures_moy:.1f}h moy.")
             else:
-                self.log_manager.log_message(f"• {team['Équipe']} : {nb_emp} employés")
-        self.log_manager.log_message("")
+                lines.append(f"• {team['Équipe']} : {nb_emp} employés")
+        lines.append("")
+        
+        for line in lines:
+            self.log_manager.log_message(line)
+        return lines
     
     def _display_tip_section(self, stats_tip, moyennes_tip, heures_col):
         """Affiche la section TIP (équipes hors astreinte)."""
-        self.log_manager.log_message("🔧 ÉQUIPES TIP (HORS ASTREINTE ET SANS EMPLOYÉS 3x8)")
-        
-        # Statistiques générales TIP
-        nb_employes_tip = len(stats_tip)
-        nb_equipes_tip = len(moyennes_tip)
-        moy_heures_tip = stats_tip['Total_Heures_Travaillées'].mean()
-        moy_presence_tip = stats_tip['Présence_%_365j'].mean()
-        
-        self.log_manager.log_message(f"• Nombre d'employés TIP (sans employés 3x8) : {nb_employes_tip}")
-        self.log_manager.log_message(f"• Nombre d'équipes TIP : {nb_equipes_tip}")
-        self.log_manager.log_message(f"• Moyenne d'heures travaillées TIP : {moy_heures_tip:.1f}h")
-        self.log_manager.log_message(f"• Taux de présence moyen TIP : {moy_presence_tip:.1f}%")
+        lines = [
+            "🔧 ÉQUIPES TIP (HORS ASTREINTE ET SANS EMPLOYÉS 3x8)",
+            "",
+            f"• Nombre d'employés TIP (sans employés 3x8) : {len(stats_tip)}",
+            f"• Nombre d'équipes TIP : {len(moyennes_tip)}",
+            f"• Moyenne d'heures travaillées TIP : {stats_tip['Total_Heures_Travaillées'].mean():.1f}h",
+            f"• Taux de présence moyen TIP : {stats_tip['Présence_%_365j'].mean():.1f}%",
+            "",
+            "🏆 TOP 3 EMPLOYÉS TIP (par heures travaillées)"
+        ]
         
         # Top 3 employés TIP
         top_employes_tip = stats_tip.nlargest(3, 'Total_Heures_Travaillées')
-        self.log_manager.log_message("")
-        self.log_manager.log_message("🏆 TOP 3 EMPLOYÉS TIP (par heures travaillées)")
         for i, (_, emp) in enumerate(top_employes_tip.iterrows(), 1):
-            self.log_manager.log_message(
-                f"{i}. {emp['Prénom']} {emp['Nom']} ({emp['Équipe']}) : {emp['Total_Heures_Travaillées']:.1f}h"
-            )
+            lines.append(f"{i}. {emp['Prénom']} {emp['Nom']} ({emp['Équipe']}) : {emp['Total_Heures_Travaillées']:.1f}h")
+        
+        lines.extend([
+            "",
+            "📋 RÉPARTITION PAR ÉQUIPE TIP"
+        ])
         
         # Répartition par équipe TIP
-        self.log_manager.log_message("")
-        self.log_manager.log_message("📋 RÉPARTITION PAR ÉQUIPE TIP")
         for _, team in moyennes_tip.iterrows():
             nb_emp = team.get('Nb_Employés', 'N/A')
             if heures_col:
                 heures_moy = team[heures_col]
-                self.log_manager.log_message(f"• {team['Équipe']} : {nb_emp} employés, {heures_moy:.1f}h moy.")
+                lines.append(f"• {team['Équipe']} : {nb_emp} employés, {heures_moy:.1f}h moy.")
             else:
-                self.log_manager.log_message(f"• {team['Équipe']} : {nb_emp} employés")
-        self.log_manager.log_message("")
+                lines.append(f"• {team['Équipe']} : {nb_emp} employés")
+        lines.append("")
+        
+        for line in lines:
+            self.log_manager.log_message(line)
+        return lines
     
     def _display_3x8_section(self, stats_3x8, moyennes_3x8, heures_col):
         """Affiche la section 3x8."""
-        self.log_manager.log_message("🔄 ÉQUIPES EN 3x8")
+        lines = [
+            "🔄 ÉQUIPES EN 3x8",
+            "",
+            f"• Nombre d'employés en 3x8 : {len(stats_3x8)}",
+            f"• Nombre d'équipes en 3x8 : {len(moyennes_3x8)}",
+            "",
+            "📅 STATISTIQUES DE PRÉSENCE 3x8",
+            f"• Total jours travaillés : {stats_3x8['Jours_Travaillés'].sum():.1f}",
+            f"• Total jours d'absence partielle : {stats_3x8['Jours_Absents_Partiels'].sum():.1f}",
+            f"• Total jours d'absence : {stats_3x8['Total_Jours_Absents'].sum():.1f}",
+            f"• Moyenne jours travaillés par employé : {stats_3x8['Jours_Travaillés'].mean():.1f}",
+            f"• Moyenne jours d'absence partielle par employé : {stats_3x8['Jours_Absents_Partiels'].mean():.1f}",
+            f"• Moyenne jours d'absence totale par employé : {stats_3x8['Total_Jours_Absents'].mean():.1f}",
+            "",
+            "⏰ RÉPARTITION DES POSTES 3x8",
+            f"• Total postes du matin (7h30-15h30) : {stats_3x8['Postes_Matin'].sum()}",
+            f"• Total postes d'après-midi (15h30-23h30) : {stats_3x8['Postes_Apres_Midi'].sum()}",
+            f"• Total postes de nuit (23h30-7h30) : {stats_3x8['Postes_Nuit'].sum()}",
+            f"• Moyenne postes du matin par employé : {stats_3x8['Postes_Matin'].mean():.1f}",
+            f"• Moyenne postes d'après-midi par employé : {stats_3x8['Postes_Apres_Midi'].mean():.1f}",
+            f"• Moyenne postes de nuit par employé : {stats_3x8['Postes_Nuit'].mean():.1f}",
+            "",
+            "🏆 TOP EMPLOYÉS 3x8 (par jours travaillés)"
+        ]
         
-        # Statistiques générales 3x8
-        nb_employes_3x8 = len(stats_3x8)
-        nb_equipes_3x8 = len(moyennes_3x8)
-        
-        # Calcul des totaux des postes 3x8 (avec vérification de l'existence des colonnes)
-        total_jours_travailles = stats_3x8['Jours_Travaillés'].sum() if 'Jours_Travaillés' in stats_3x8.columns else 0
-        total_jours_absents_partiels = stats_3x8['Jours_Absents_Partiels'].sum() if 'Jours_Absents_Partiels' in stats_3x8.columns else 0
-        total_jours_absents = stats_3x8['Total_Jours_Absents'].sum() if 'Total_Jours_Absents' in stats_3x8.columns else 0
-        total_postes_matin = stats_3x8['Postes_Matin'].sum() if 'Postes_Matin' in stats_3x8.columns else 0
-        total_postes_apres_midi = stats_3x8['Postes_Apres_Midi'].sum() if 'Postes_Apres_Midi' in stats_3x8.columns else 0
-        total_postes_nuit = stats_3x8['Postes_Nuit'].sum() if 'Postes_Nuit' in stats_3x8.columns else 0
-        
-        # Calcul des moyennes par employé
-        moy_jours_travailles = stats_3x8['Jours_Travaillés'].mean() if 'Jours_Travaillés' in stats_3x8.columns else 0
-        moy_jours_absents_partiels = stats_3x8['Jours_Absents_Partiels'].mean() if 'Jours_Absents_Partiels' in stats_3x8.columns else 0
-        moy_total_jours_absents = stats_3x8['Total_Jours_Absents'].mean() if 'Total_Jours_Absents' in stats_3x8.columns else 0
-        moy_postes_matin = stats_3x8['Postes_Matin'].mean() if 'Postes_Matin' in stats_3x8.columns else 0
-        moy_postes_apres_midi = stats_3x8['Postes_Apres_Midi'].mean() if 'Postes_Apres_Midi' in stats_3x8.columns else 0
-        moy_postes_nuit = stats_3x8['Postes_Nuit'].mean() if 'Postes_Nuit' in stats_3x8.columns else 0
-        
-        # Affichage des statistiques générales
-        self.log_manager.log_message(f"• Nombre d'employés en 3x8 : {nb_employes_3x8}")
-        self.log_manager.log_message(f"• Nombre d'équipes en 3x8 : {nb_equipes_3x8}")
-        
-        self.log_manager.log_message("\n📅 STATISTIQUES DE PRÉSENCE 3x8")
-        self.log_manager.log_message(f"• Total jours travaillés : {total_jours_travailles:.1f}")
-        self.log_manager.log_message(f"• Total jours d'absence partielle : {total_jours_absents_partiels:.1f}")
-        self.log_manager.log_message(f"• Total jours d'absence : {total_jours_absents:.1f}")
-        self.log_manager.log_message(f"• Moyenne jours travaillés par employé : {moy_jours_travailles:.1f}")
-        self.log_manager.log_message(f"• Moyenne jours d'absence partielle par employé : {moy_jours_absents_partiels:.1f}")
-        self.log_manager.log_message(f"• Moyenne jours d'absence totale par employé : {moy_total_jours_absents:.1f}")
-        
-        self.log_manager.log_message("\n⏰ RÉPARTITION DES POSTES 3x8")
-        self.log_manager.log_message(f"• Total postes du matin (7h30-15h30) : {total_postes_matin}")
-        self.log_manager.log_message(f"• Total postes d'après-midi (15h30-23h30) : {total_postes_apres_midi}")
-        self.log_manager.log_message(f"• Total postes de nuit (23h30-7h30) : {total_postes_nuit}")
-        self.log_manager.log_message(f"• Moyenne postes du matin par employé : {moy_postes_matin:.1f}")
-        self.log_manager.log_message(f"• Moyenne postes d'après-midi par employé : {moy_postes_apres_midi:.1f}")
-        self.log_manager.log_message(f"• Moyenne postes de nuit par employé : {moy_postes_nuit:.1f}")
-        
-        # Top 3 employés 3x8 par jours travaillés
-        if nb_employes_3x8 > 0:
-            top_employes_3x8 = stats_3x8.nlargest(min(3, nb_employes_3x8), 'Jours_Travaillés')
-            self.log_manager.log_message("")
-            self.log_manager.log_message("🏆 TOP EMPLOYÉS 3x8 (par jours travaillés)")
+        # Top employés 3x8 par jours travaillés
+        if len(stats_3x8) > 0:
+            top_employes_3x8 = stats_3x8.nlargest(min(3, len(stats_3x8)), 'Jours_Travaillés')
             for i, (_, emp) in enumerate(top_employes_3x8.iterrows(), 1):
-                self.log_manager.log_message(
+                lines.append(
                     f"{i}. {emp['Prénom']} {emp['Nom']} ({emp['Équipe']}) : {emp['Jours_Travaillés']:.1f} jours travaillés, "
                     f"Absences: {emp['Jours_Absents_Partiels']:.1f} partiels - "
                     f"Postes: Matin: {emp['Postes_Matin']}, Après-midi: {emp['Postes_Apres_Midi']}, Nuit: {emp['Postes_Nuit']}"
                 )
         
-        # Répartition par équipe 3x8
-        if nb_equipes_3x8 > 0:
-            self.log_manager.log_message("")
-            self.log_manager.log_message("📋 RÉPARTITION PAR ÉQUIPE 3x8")
-            for _, team in moyennes_3x8.iterrows():
-                nb_emp = team.get('Nb_Employés', 'N/A')
-                moy_jours = team.get('Moy_Jours_Travaillés', 0)
-                moy_absents_partiels = team.get('Moy_Jours_Absents_Partiels', 0)
-                
-                # Vérifier si nous avons les totaux ou les moyennes des postes
-                if 'Total_Postes_Matin' in team:
-                    matin = team.get('Total_Postes_Matin', 0)
-                    apres_midi = team.get('Total_Postes_Apres_Midi', 0) 
-                    nuit = team.get('Total_Postes_Nuit', 0)
-                    self.log_manager.log_message(
-                        f"• {team['Équipe']} : {nb_emp} employés, {moy_jours:.1f} jours travaillés, "
-                        f"Absences: {moy_absents_partiels:.1f} partiels - "
-                        f"Total postes: Matin: {matin}, Après-midi: {apres_midi}, Nuit: {nuit}"
-                    )
-                else:
-                    matin = team.get('Moy_Postes_Matin', 0)
-                    apres_midi = team.get('Moy_Postes_Apres_Midi', 0) 
-                    nuit = team.get('Moy_Postes_Nuit', 0)
-                    self.log_manager.log_message(
-                        f"• {team['Équipe']} : {nb_emp} employés, {moy_jours:.1f} jours travaillés, "
-                        f"Absences: {moy_absents_partiels:.1f} partiels - "
-                        f"Moyenne postes: Matin: {matin:.1f}, Après-midi: {apres_midi:.1f}, Nuit: {nuit:.1f}"
-                    )
+        lines.extend([
+            "",
+            "📋 RÉPARTITION PAR ÉQUIPE 3x8"
+        ])
         
-        self.log_manager.log_message("")
+        # Répartition par équipe 3x8
+        for _, team in moyennes_3x8.iterrows():
+            nb_emp = team.get('Nb_Employés', 'N/A')
+            moy_jours = team.get('Moy_Jours_Travaillés', 0)
+            moy_absents_partiels = team.get('Moy_Jours_Absents_Partiels', 0)
+            
+            # Vérifier si nous avons les totaux ou les moyennes des postes
+            if 'Total_Postes_Matin' in team:
+                matin = team.get('Total_Postes_Matin', 0)
+                apres_midi = team.get('Total_Postes_Apres_Midi', 0) 
+                nuit = team.get('Total_Postes_Nuit', 0)
+                lines.append(
+                    f"• {team['Équipe']} : {nb_emp} employés, {moy_jours:.1f} jours travaillés, "
+                    f"Absences: {moy_absents_partiels:.1f} partiels - "
+                    f"Total postes: Matin: {matin}, Après-midi: {apres_midi}, Nuit: {nuit}"
+                )
+            else:
+                matin = team.get('Moy_Postes_Matin', 0)
+                apres_midi = team.get('Moy_Postes_Apres_Midi', 0) 
+                nuit = team.get('Moy_Postes_Nuit', 0)
+                lines.append(
+                    f"• {team['Équipe']} : {nb_emp} employés, {moy_jours:.1f} jours travaillés, "
+                    f"Absences: {moy_absents_partiels:.1f} partiels - "
+                    f"Moyenne postes: Matin: {matin:.1f}, Après-midi: {apres_midi:.1f}, Nuit: {nuit:.1f}"
+                )
+        lines.append("")
+        
+        for line in lines:
+            self.log_manager.log_message(line)
+        return lines
     
     def _display_file_info(self, csv_file_path):
         """Affiche les informations du fichier."""
-        self.log_manager.log_message("📁 FICHIER SOURCE")
-        self.log_manager.log_message(f"• {os.path.basename(csv_file_path)}")
-        self.log_manager.log_message(f"• Traité le {pd.Timestamp.now().strftime('%d/%m/%Y à %H:%M')}")
-        self.log_manager.log_message("")
+        lines = [
+            "📁 FICHIER SOURCE",
+            f"• {os.path.basename(csv_file_path)}",
+            f"• Traité le {pd.Timestamp.now().strftime('%d/%m/%Y à %H:%M')}",
+            ""
+        ]
+        for line in lines:
+            self.log_manager.log_message(line)
+        return lines
     
     def _display_footer(self):
         """Affiche le pied de page."""
-        self.log_manager.log_message("💾 EXPORT")
-        self.log_manager.log_message("• Utilisez le bouton 'Exporter vers Excel' pour sauvegarder les résultats")
-        self.log_manager.log_message("• Le fichier Excel contiendra tous les détails par employé et par équipe")
-        self.log_manager.log_message("")
-        self.log_manager.log_message("="*60) 
+        lines = [
+            "💾 EXPORT",
+            "• Utilisez le bouton 'Exporter vers Excel' pour sauvegarder les résultats",
+            "• Le fichier Excel contiendra tous les détails par employé et par équipe",
+            "",
+            "="*60
+        ]
+        for line in lines:
+            self.log_manager.log_message(line)
+        return lines 

@@ -26,6 +26,7 @@ class PMTAnalyticsInterface:
         self.moyennes_tip = None
         self.stats_3x8 = None
         self.moyennes_3x8 = None
+        self.summary_content = None  # Pour stocker le contenu du résumé
         
         # Initialiser les gestionnaires
         self.log_manager = None
@@ -139,6 +140,15 @@ class PMTAnalyticsInterface:
         )
         self.export_button.pack(side=tk.LEFT)
         
+        # Bouton exporter résumé
+        self.export_summary_button = ttk.Button(
+            button_frame, 
+            text="📄 Exporter le résumé", 
+            command=self.export_summary,
+            state='disabled'
+        )
+        self.export_summary_button.pack(side=tk.LEFT, padx=(10, 0))
+        
         # Bouton aide
         help_button = ttk.Button(button_frame, text="❓ Aide", command=show_help)
         help_button.pack(side=tk.RIGHT, padx=(10, 0))
@@ -207,10 +217,11 @@ class PMTAnalyticsInterface:
         self.select_button.config(state='normal')
         self.process_button.config(state='normal')
         self.export_button.config(state='normal')
+        self.export_summary_button.config(state='normal')
         self.progress.stop()
         
         # Afficher le résumé dans le journal
-        self.summary_displayer.display_summary(
+        self.summary_content = self.summary_displayer.display_summary(
             self.stats_final, 
             self.moyennes_equipe, 
             self.csv_file_path,
@@ -249,4 +260,8 @@ class PMTAnalyticsInterface:
             self.moyennes_tip,
             self.stats_3x8,
             self.moyennes_3x8
-        ) 
+        )
+
+    def export_summary(self):
+        """Exporte le résumé vers un fichier."""
+        self.export_manager.export_summary(self.summary_content) 

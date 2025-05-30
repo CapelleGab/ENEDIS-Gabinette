@@ -126,4 +126,49 @@ class ExportManager:
     def _handle_general_error(self, e):
         """Gère les erreurs générales."""
         self.log_manager.log_message(f"❌ Erreur d'export : {str(e)}")
-        messagebox.showerror("Erreur d'export", f"❌ Erreur lors de l'export :\n{str(e)}") 
+        messagebox.showerror("Erreur d'export", f"❌ Erreur lors de l'export :\n{str(e)}")
+
+    def export_summary(self, summary_content):
+        """Exporte le résumé vers un fichier texte."""
+        if not summary_content:
+            messagebox.showerror("Erreur", "Aucun résumé à exporter. Veuillez d'abord lancer une analyse.")
+            return False
+        
+        try:
+            # Demander à l'utilisateur où sauvegarder
+            file_path = filedialog.asksaveasfilename(
+                title="Sauvegarder le résumé",
+                defaultextension=".txt",
+                filetypes=[("Fichiers texte", "*.txt"), ("Tous les fichiers", "*.*")],
+                initialfile=f"Resume_PMT_{pd.Timestamp.now().strftime('%Y%m%d_%H%M')}.txt"
+            )
+            
+            if not file_path:
+                return False
+            
+            # Sauvegarder le résumé
+            with open(file_path, 'w', encoding='utf-8') as f:
+                f.write(summary_content)
+            
+            # Message de confirmation
+            messagebox.showinfo(
+                "Export réussi",
+                f"✅ Résumé exporté avec succès !\n\n"
+                f"📁 Emplacement : {file_path}"
+            )
+            
+            # Log dans l'interface
+            self.log_manager.log_message(f"📄 Export résumé réussi : {file_path}")
+            return True
+            
+        except PermissionError as e:
+            self._handle_permission_error(e)
+            return False
+            
+        except OSError as e:
+            self._handle_os_error(e)
+            return False
+            
+        except Exception as e:
+            self._handle_general_error(e)
+            return False 
