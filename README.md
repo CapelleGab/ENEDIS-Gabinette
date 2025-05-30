@@ -155,4 +155,4 @@ Usage interne Enedis uniquement.
 
 **Développé par** : CAPELLE Gabin - Enedis  
 **Version** : 2.0.0  
-**Dernière mise à jour** : Janvier 2025
+**Dernière mise à jour** : Mai 2025
