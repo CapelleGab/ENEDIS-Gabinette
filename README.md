@@ -12,6 +12,8 @@ PMT Analytics est une application desktop qui analyse les fichiers CSV de planni
 - **🔧 Filtrage automatique** : Suppression des employés avec données insuffisantes
 - **📊 Terminologie TIP** : Changement de "PIT" vers "TIP" dans toute l'application
 - **🔨 Build optimisé** : Configuration améliorée avec icônes Windows/macOS
+- **🧮 Moyennes pondérées** : Calcul automatique des moyennes par nombre d'employés
+- **📈 Résumé optimisé** : Affichage restructuré avec conversion heures/jours et TOP consolidés
 
 ### 📈 Analyses supportées
 
@@ -65,10 +67,10 @@ Votre fichier CSV doit respecter le format Enedis standard :
 
 #### Affichage temps réel
 
-- Statistiques générales par catégorie
-- Top employés par performance
-- Répartition par équipe
-- Détails spécifiques 3x8
+- **📈 Statistiques générales** : Moyennes pondérées par nombre d'employés avec conversion heures/jours
+- **🏢 Analyse par équipe** : Répartition détaillée avec moyennes pondérées intégrées
+- **🏆 TOP consolidé** : Classements regroupés en fin de résumé (astreinte, TIP, 3x8)
+- **⏰ Détails 3x8** : Répartition des postes matin/après-midi/nuit
 
 #### Export Excel (6 feuilles)
 

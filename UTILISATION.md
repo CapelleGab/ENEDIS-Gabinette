@@ -45,10 +45,11 @@
 
 Le fichier texte contiendra :
 
-- 📈 Statistiques générales
-- 🏆 Top employés par catégorie
-- 📋 Répartition par équipe
-- 📊 Détails spécifiques 3x8 (postes, absences)
+- 📈 Statistiques générales avec moyennes pondérées par nombre d'employés
+- 🏢 Analyse des équipes avec conversion automatique heures/jours
+- 📋 Répartition détaillée par équipe avec moyennes pondérées intégrées
+- 🏆 TOP consolidé en fin : classements astreinte, TIP et 3x8
+- ⏰ Détails spécifiques 3x8 (postes, absences) avec moyennes pondérées
 
 #### 💾 Export Excel (données complètes)
 
@@ -63,23 +64,26 @@ Le fichier texte contiendra :
 
 **Équipes d'astreinte :**
 
-- 📈 Statistiques générales
-- 🏆 Top 5 employés par heures
-- 🏢 Meilleure équipe
-- 📋 Répartition par équipe
+- 📈 Statistiques générales avec moyennes pondérées (heures et jours)
+- 🏢 Meilleure équipe avec conversion heures/jours
+- 📋 Répartition par équipe avec moyennes pondérées intégrées
 
 **Équipes TIP (hors astreinte) :**
 
-- 📈 Statistiques générales TIP
-- 🏆 Top 3 employés TIP par heures
-- 📋 Répartition par équipe TIP
+- 📈 Statistiques générales TIP avec moyennes pondérées
+- 📋 Répartition par équipe TIP avec moyennes pondérées intégrées
 
 **Équipes 3x8 :**
 
-- 📅 Statistiques de présence
+- 📅 Statistiques de présence détaillées
 - ⏰ Répartition des postes (matin/après-midi/nuit)
-- 🏆 Top employés par jours travaillés
-- 📋 Moyennes par équipe
+- 📋 Moyennes par équipe avec moyennes pondérées en jours travaillés
+
+**🏆 TOP consolidé (en fin de résumé) :**
+
+- Top 5 employés astreinte (par heures travaillées)
+- Top 3 employés TIP (par heures travaillées)
+- Top employés 3x8 (par jours travaillés avec détails postes)
 
 ### Fichier Excel (6 feuilles)
 

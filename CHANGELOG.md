@@ -26,6 +26,21 @@
 - **💾 Export flexible** : Choix du format (Excel pour données détaillées, Texte pour résumé)
 - **📊 Affichage amélioré** : Résumé plus structuré et lisible
 
+### 📈 Améliorations du résumé
+
+- **🧮 Moyennes pondérées** : Calcul automatique des moyennes pondérées par nombre d'employés
+  - Astreinte : Moyenne pondérée des 4 agences avec conversion heures/jours
+  - TIP : Moyenne pondérée des équipes TIP avec conversion heures/jours
+  - 3x8 : Moyenne pondérée des équipes 3x8 en jours travaillés
+- **📊 Affichage optimisé** :
+  - Conversion automatique heures → jours (÷8) affichée entre parenthèses
+  - Réorganisation : statistiques générales → équipes → TOP regroupés en fin
+  - Suppression des sections techniques (fichier source, export)
+- **🏆 TOP consolidé** : Tous les classements regroupés à la fin du résumé
+  - TOP 5 employés astreinte (par heures)
+  - TOP 3 employés TIP (par heures)
+  - TOP employés 3x8 (par jours travaillés)
+
 ### 🔧 Configuration
 
 - **⚙️ Nouveau module** : `src/utils/remover.py` pour le filtrage des données
