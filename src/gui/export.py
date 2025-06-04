@@ -17,7 +17,7 @@ class ExportManager:
     def __init__(self, log_manager):
         self.log_manager = log_manager
     
-    def export_to_excel(self, stats_final, moyennes_equipe, csv_file_path, stats_tip=None, moyennes_tip=None, stats_3x8=None, moyennes_3x8=None):
+    def export_to_excel(self, stats_final, moyennes_equipe, csv_file_path, stats_tip=None, moyennes_tip=None, stats_3x8=None, moyennes_3x8=None, arrets_maladie_tous=None):
         """Exporte les données vers Excel."""
         if stats_final is None or moyennes_equipe is None:
             messagebox.showerror("Erreur", "Aucune donnée à exporter.")
@@ -36,7 +36,7 @@ class ExportManager:
                 return False
             
             # Sauvegarder les données
-            sauvegarder_excel(stats_final, moyennes_equipe, file_path, stats_tip, moyennes_tip, stats_3x8, moyennes_3x8)
+            sauvegarder_excel(stats_final, moyennes_equipe, file_path, stats_tip, moyennes_tip, stats_3x8, moyennes_3x8, arrets_maladie_tous)
             
             # Message de confirmation
             content_msg = f"📊 Astreinte : {len(stats_final)} employés, {len(moyennes_equipe)} équipes"
@@ -44,6 +44,8 @@ class ExportManager:
                 content_msg += f"\n📊 TIP : {len(stats_tip)} employés, {len(moyennes_tip)} équipes"
             if stats_3x8 is not None and moyennes_3x8 is not None:
                 content_msg += f"\n🔄 3x8 : {len(stats_3x8)} employés, {len(moyennes_3x8)} équipes"
+            if arrets_maladie_tous is not None:
+                content_msg += f"\n🏥 Arrêts maladie : {len(arrets_maladie_tous)} employés (tous services)"
             
             messagebox.showinfo(
                 "Export réussi",

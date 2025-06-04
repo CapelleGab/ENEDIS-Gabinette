@@ -27,7 +27,8 @@ from src.utils import (
     supprimer_3x8_insuffisants,
     enrichir_stats_avec_heures_supplementaires_hors_astreinte,
     enrichir_stats_avec_arrets_maladie,
-    enrichir_moyennes_avec_nouvelles_stats
+    enrichir_moyennes_avec_nouvelles_stats,
+    calculer_statistiques_arrets_maladie_tous_employes
 )
 
 
@@ -49,6 +50,30 @@ class DataProcessor:
             self.log_manager.log_message("🔄 Chargement des données CSV...")
             df_originel = charger_donnees_csv(config.FICHIER_CSV)
             self.log_manager.log_message(f"✅ {len(df_originel)} lignes chargées")
+            
+            # Créer l'identifiant unique Gentile pour tous les employés
+            self.log_manager.log_message("🔄 Création de l'identifiant unique pour tous les employés...")
+            if 'Nom' in df_originel.columns and 'Prénom' in df_originel.columns and 'Equipe (Lib.)' in df_originel.columns:
+                df_originel['Gentile'] = (df_originel['Nom'] + ' ' + 
+                                         df_originel['Prénom'] + ' ' + 
+                                         df_originel['Equipe (Lib.)'])
+                self.log_manager.log_message("✅ Identifiant unique créé")
+            else:
+                self.log_manager.log_message("⚠️ Impossible de créer l'identifiant unique (colonnes manquantes)")
+            
+            # Calcul des statistiques d'arrêts maladie pour TOUS les employés
+            self.log_manager.log_message("🔄 Calcul des statistiques d'arrêts maladie pour tous les employés...")
+            try:
+                arrets_maladie_tous = calculer_statistiques_arrets_maladie_tous_employes(df_originel)
+                if not arrets_maladie_tous.empty:
+                    self.log_manager.log_message(f"✅ Statistiques d'arrêts maladie calculées pour {len(arrets_maladie_tous)} employés")
+                else:
+                    self.log_manager.log_message("⚠️ Aucune statistique d'arrêts maladie n'a pu être calculée")
+                    arrets_maladie_tous = pd.DataFrame()
+            except Exception as e:
+                self.log_manager.log_message(f"⚠️ Erreur lors du calcul des statistiques d'arrêts maladie : {str(e)}")
+                self.log_manager.log_message("⚠️ L'analyse va continuer sans les statistiques d'arrêts maladie")
+                arrets_maladie_tous = pd.DataFrame()
             
             self.log_manager.log_message("🔄 Préparation des données...")
             df_equipe = preparer_donnees(df_originel)
@@ -229,7 +254,7 @@ class DataProcessor:
                 self.log_manager.log_message(f"📊 Moyenne heures par jour d'arrêt: {moy_heures_arret:.1f}h")
             
             self.log_manager.log_message("✅ Traitement terminé avec succès !")
-            self.on_success(stats_final, moyennes_equipe, stats_final_tip, moyennes_equipe_tip, stats_final_3x8, moyennes_equipe_3x8)
+            self.on_success(stats_final, moyennes_equipe, stats_final_tip, moyennes_equipe_tip, stats_final_3x8, moyennes_equipe_3x8, arrets_maladie_tous)
             
         except Exception as e:
             error_msg = f"❌ Erreur lors du traitement :\n{str(e)}"
