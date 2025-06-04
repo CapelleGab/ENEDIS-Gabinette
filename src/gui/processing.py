@@ -25,6 +25,7 @@ from src.utils import (
     supprimer_astreinte_insuffisants,
     supprimer_tip_insuffisants,
     supprimer_3x8_insuffisants,
+    enrichir_stats_avec_heures_supplementaires_hors_astreinte,
     enrichir_stats_avec_arrets_maladie,
     enrichir_moyennes_avec_nouvelles_stats
 )
@@ -66,6 +67,9 @@ class DataProcessor:
             stats_employes = calculer_statistiques_employes(df_filtre)
             
             # ===== NOUVELLES STATISTIQUES POUR ASTREINTE (AVANT FORMATAGE) =====
+            self.log_manager.log_message("🔄 Enrichissement avec heures supplémentaires hors astreinte...")
+            stats_employes = enrichir_stats_avec_heures_supplementaires_hors_astreinte(stats_employes, df_unique, 'Gentile')
+            
             self.log_manager.log_message("🔄 Enrichissement avec statistiques d'arrêts maladie...")
             stats_employes = enrichir_stats_avec_arrets_maladie(stats_employes, df_unique, 'Gentile')
             
@@ -125,6 +129,9 @@ class DataProcessor:
                     stats_employes_tip = calculer_statistiques_employes(df_filtre_tip)
                     
                     # ===== NOUVELLES STATISTIQUES POUR TIP (AVANT FORMATAGE) =====
+                    self.log_manager.log_message("🔄 Enrichissement TIP avec heures supplémentaires hors astreinte...")
+                    stats_employes_tip = enrichir_stats_avec_heures_supplementaires_hors_astreinte(stats_employes_tip, df_unique_tip, 'Gentile')
+                    
                     self.log_manager.log_message("🔄 Enrichissement TIP avec statistiques d'arrêts maladie...")
                     stats_employes_tip = enrichir_stats_avec_arrets_maladie(stats_employes_tip, df_unique_tip, 'Gentile')
                     
@@ -157,6 +164,9 @@ class DataProcessor:
                     stats_final_3x8 = calculer_statistiques_3x8(df_unique_3x8)
                     
                     # ===== NOUVELLES STATISTIQUES POUR 3x8 (AVANT SUPPRESSION) =====
+                    self.log_manager.log_message("🔄 Enrichissement 3x8 avec heures supplémentaires hors astreinte...")
+                    stats_final_3x8 = enrichir_stats_avec_heures_supplementaires_hors_astreinte(stats_final_3x8, df_unique_3x8, 'Gentile')
+                    
                     self.log_manager.log_message("🔄 Enrichissement 3x8 avec statistiques d'arrêts maladie...")
                     stats_final_3x8 = enrichir_stats_avec_arrets_maladie(stats_final_3x8, df_unique_3x8, 'Gentile')
                     
@@ -180,34 +190,43 @@ class DataProcessor:
                     self.log_manager.log_message(f"📊 Répartition des postes 3x8: {total_matin} matin, {total_apres_midi} après-midi, {total_nuit} nuit")
                     
                     # Afficher un résumé des nouvelles statistiques
-                    if 'Nb_Arrêts_Maladie_41' in stats_final_3x8.columns:
-                        total_arrets_41 = stats_final_3x8['Nb_Arrêts_Maladie_41'].sum()
-                        self.log_manager.log_message(f"📊 Total arrêts maladie (code 41): {total_arrets_41}")
+                    if 'Heures_Supp' in stats_final_3x8.columns:
+                        total_hs_hors_astreinte_3x8 = stats_final_3x8['Heures_Supp'].sum()
+                        self.log_manager.log_message(f"📊 Total heures supplémentaires 3x8 (hors jours avec 'I'): {total_hs_hors_astreinte_3x8:.1f}h")
                     
-                    if 'Nb_Arrêts_Maladie_5H' in stats_final_3x8.columns:
-                        total_arrets_5h = stats_final_3x8['Nb_Arrêts_Maladie_5H'].sum()
-                        self.log_manager.log_message(f"📊 Total arrêts maladie (code 5H): {total_arrets_5h}")
+                    if 'Nb_Périodes_Arrêts' in stats_final_3x8.columns:
+                        total_periodes_3x8 = stats_final_3x8['Nb_Périodes_Arrêts'].sum()
+                        self.log_manager.log_message(f"📊 Total périodes d'arrêts maladie 3x8: {total_periodes_3x8}")
                     
-                    if 'Moy_Heures_Par_Arrêt_Maladie' in stats_final_3x8.columns:
-                        moy_heures_arret = stats_final_3x8['Moy_Heures_Par_Arrêt_Maladie'].mean()
-                        self.log_manager.log_message(f"📊 Moyenne heures par arrêt maladie: {moy_heures_arret:.1f}h")
+                    if 'Nb_Jours_Arrêts_41' in stats_final_3x8.columns and 'Nb_Jours_Arrêts_5H' in stats_final_3x8.columns:
+                        total_jours_41_3x8 = stats_final_3x8['Nb_Jours_Arrêts_41'].sum()
+                        total_jours_5h_3x8 = stats_final_3x8['Nb_Jours_Arrêts_5H'].sum()
+                        self.log_manager.log_message(f"📊 Total jours arrêts maladie 3x8: 41={total_jours_41_3x8}, 5H={total_jours_5h_3x8}")
                 else:
                     self.log_manager.log_message("⚠️ Aucun employé en 3x8 trouvé")
             else:
                 self.log_manager.log_message("⚠️ Aucune donnée TIP trouvée")
             
             # Afficher un résumé des nouvelles statistiques pour astreinte
-            if 'Nb_Arrêts_Maladie_41' in stats_final.columns:
-                total_arrets_41 = stats_final['Nb_Arrêts_Maladie_41'].sum()
-                self.log_manager.log_message(f"📊 Total arrêts maladie (code 41): {total_arrets_41}")
+            if 'Heures_Supp' in stats_final.columns:
+                total_hs_hors_astreinte = stats_final['Heures_Supp'].sum()
+                self.log_manager.log_message(f"📊 Total heures supplémentaires (hors jours avec 'I'): {total_hs_hors_astreinte:.1f}h")
             
-            if 'Nb_Arrêts_Maladie_5H' in stats_final.columns:
-                total_arrets_5h = stats_final['Nb_Arrêts_Maladie_5H'].sum()
-                self.log_manager.log_message(f"📊 Total arrêts maladie (code 5H): {total_arrets_5h}")
+            if 'Nb_Périodes_Arrêts' in stats_final.columns:
+                total_periodes = stats_final['Nb_Périodes_Arrêts'].sum()
+                self.log_manager.log_message(f"📊 Total périodes d'arrêts maladie: {total_periodes}")
+                
+            if 'Nb_Jours_Arrêts_41' in stats_final.columns:
+                total_jours_41 = stats_final['Nb_Jours_Arrêts_41'].sum()
+                self.log_manager.log_message(f"📊 Total jours arrêts maladie (code 41): {total_jours_41}")
+            
+            if 'Nb_Jours_Arrêts_5H' in stats_final.columns:
+                total_jours_5h = stats_final['Nb_Jours_Arrêts_5H'].sum()
+                self.log_manager.log_message(f"📊 Total jours arrêts maladie (code 5H): {total_jours_5h}")
             
             if 'Moy_Heures_Par_Arrêt_Maladie' in stats_final.columns:
                 moy_heures_arret = stats_final['Moy_Heures_Par_Arrêt_Maladie'].mean()
-                self.log_manager.log_message(f"📊 Moyenne heures par arrêt maladie: {moy_heures_arret:.1f}h")
+                self.log_manager.log_message(f"📊 Moyenne heures par jour d'arrêt: {moy_heures_arret:.1f}h")
             
             self.log_manager.log_message("✅ Traitement terminé avec succès !")
             self.on_success(stats_final, moyennes_equipe, stats_final_tip, moyennes_equipe_tip, stats_final_3x8, moyennes_equipe_3x8)

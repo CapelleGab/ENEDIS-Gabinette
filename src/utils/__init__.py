@@ -14,7 +14,8 @@ from .calculateurs_supplementaires import (
     enrichir_stats_astreinte_avec_heures_supp,
     enrichir_stats_3x8_avec_heures_supp_service_continu,
     enrichir_stats_avec_arrets_maladie,
-    enrichir_moyennes_avec_nouvelles_stats
+    enrichir_moyennes_avec_nouvelles_stats,
+    enrichir_stats_avec_heures_supplementaires_hors_astreinte
 )
 from .formatters import formater_donnees_finales, analyser_codes_presence
 from .excel_writer import sauvegarder_excel
@@ -43,6 +44,7 @@ __all__ = [
     'enrichir_stats_3x8_avec_heures_supp_service_continu',
     'enrichir_stats_avec_arrets_maladie',
     'enrichir_moyennes_avec_nouvelles_stats',
+    'enrichir_stats_avec_heures_supplementaires_hors_astreinte',
     'formater_donnees_finales',
     'analyser_codes_presence',
     'sauvegarder_excel',

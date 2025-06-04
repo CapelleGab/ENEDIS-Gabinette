@@ -68,8 +68,11 @@ COLONNES_FINALES = [
     'Jours_Partiels', 'Total_Jours_Travaillés', 'Total_Heures_Travaillées', 
     'Jours_Complets', 'Jours_Absents', 'Total_Heures_Absence', 
     'Présence_%_365j',
+    # Nouvelle colonne pour heures supplémentaires hors astreinte
+    'Heures_Supp',
     # Nouvelles colonnes pour arrêts maladie (simplifiées)
-    'Nb_Arrêts_Maladie_41', 'Nb_Arrêts_Maladie_5H', 'Moy_Heures_Par_Arrêt_Maladie'
+    'Nb_Périodes_Arrêts', 'Nb_Jours_Arrêts_41', 'Nb_Jours_Arrêts_5H',
+    'Moy_Heures_Par_Arrêt_Maladie'
 ]
 
 NOMS_FEUILLES = {

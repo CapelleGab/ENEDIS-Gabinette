@@ -26,7 +26,9 @@ def formater_donnees_finales(stats_employes):
     
     # Nouvelles colonnes optionnelles (peuvent ne pas être présentes)
     nouvelles_colonnes = [
-        'Nb_Arrêts_Maladie_41', 'Nb_Arrêts_Maladie_5H', 'Moy_Heures_Par_Arrêt_Maladie'
+        'Heures_Supp',
+        'Nb_Périodes_Arrêts', 'Nb_Jours_Arrêts_41', 'Nb_Jours_Arrêts_5H',
+        'Moy_Heures_Par_Arrêt_Maladie'
     ]
     
     # Sélectionner les colonnes disponibles
