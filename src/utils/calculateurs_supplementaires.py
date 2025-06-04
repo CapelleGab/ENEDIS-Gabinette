@@ -1,0 +1,514 @@
+"""
+Module de calcul des statistiques supplémentaires PMT.
+Calcule les heures supplémentaires et les statistiques d'arrêts maladie.
+Ajoute ces statistiques comme colonnes aux DataFrames existants.
+
+author : CAPELLE Gabin
+"""
+
+import pandas as pd
+from config import JOURS_WEEKEND
+
+
+def enrichir_stats_astreinte_avec_heures_supp(stats_astreinte, df_astreinte_original):
+    """
+    Enrichit les statistiques d'astreinte avec les heures supplémentaires hors cycle d'astreinte.
+    
+    Args:
+        stats_astreinte: DataFrame des statistiques d'astreinte existantes
+        df_astreinte_original: DataFrame original des données d'astreinte
+        
+    Returns:
+        pd.DataFrame: DataFrame enrichi avec les colonnes d'heures supplémentaires
+    """
+    if stats_astreinte.empty or df_astreinte_original.empty:
+        # Ajouter des colonnes vides si pas de données
+        stats_astreinte['Total_Heures_Supp_Hors_Astreinte'] = 0.0
+        stats_astreinte['Nb_Jours_Heures_Supp_Hors_Astreinte'] = 0
+        stats_astreinte['Moy_Heures_Supp_Par_Jour_Hors_Astreinte'] = 0.0
+        return stats_astreinte
+    
+    # Calculer les heures supplémentaires hors astreinte
+    stats_hs = calculer_heures_supplementaires_hors_astreinte(df_astreinte_original)
+    
+    if stats_hs.empty:
+        # Ajouter des colonnes vides si pas de données
+        stats_astreinte['Total_Heures_Supp_Hors_Astreinte'] = 0.0
+        stats_astreinte['Nb_Jours_Heures_Supp_Hors_Astreinte'] = 0
+        stats_astreinte['Moy_Heures_Supp_Par_Jour_Hors_Astreinte'] = 0.0
+        return stats_astreinte
+    
+    # Fusionner avec les statistiques existantes en utilisant Gentile
+    stats_enrichi = pd.merge(
+        stats_astreinte, 
+        stats_hs[['Gentile', 'Total_Heures_Supplementaires', 'Nb_Jours_Heures_Supplementaires', 'Moyenne_Heures_Supp_Par_Jour']], 
+        on='Gentile', 
+        how='left'
+    )
+    
+    # Renommer les colonnes pour éviter la confusion
+    stats_enrichi = stats_enrichi.rename(columns={
+        'Total_Heures_Supplementaires': 'Total_Heures_Supp_Hors_Astreinte',
+        'Nb_Jours_Heures_Supplementaires': 'Nb_Jours_Heures_Supp_Hors_Astreinte',
+        'Moyenne_Heures_Supp_Par_Jour': 'Moy_Heures_Supp_Par_Jour_Hors_Astreinte'
+    })
+    
+    # Remplir les valeurs manquantes avec 0
+    stats_enrichi['Total_Heures_Supp_Hors_Astreinte'] = stats_enrichi['Total_Heures_Supp_Hors_Astreinte'].fillna(0.0)
+    stats_enrichi['Nb_Jours_Heures_Supp_Hors_Astreinte'] = stats_enrichi['Nb_Jours_Heures_Supp_Hors_Astreinte'].fillna(0)
+    stats_enrichi['Moy_Heures_Supp_Par_Jour_Hors_Astreinte'] = stats_enrichi['Moy_Heures_Supp_Par_Jour_Hors_Astreinte'].fillna(0.0)
+    
+    return stats_enrichi
+
+
+def enrichir_stats_3x8_avec_heures_supp_service_continu(stats_3x8, df_3x8_original):
+    """
+    Enrichit les statistiques 3x8 avec les heures supplémentaires pendant le service continu.
+    
+    Args:
+        stats_3x8: DataFrame des statistiques 3x8 existantes
+        df_3x8_original: DataFrame original des données 3x8
+        
+    Returns:
+        pd.DataFrame: DataFrame enrichi avec les colonnes d'heures supplémentaires service continu
+    """
+    if stats_3x8.empty or df_3x8_original.empty:
+        # Ajouter des colonnes vides si pas de données
+        stats_3x8['Total_Heures_Supp_Service_Continu'] = 0.0
+        stats_3x8['Nb_Jours_Service_Continu_Heures_Supp'] = 0
+        stats_3x8['Total_Jours_Service_Continu'] = 0
+        stats_3x8['Moy_Heures_Supp_Service_Continu'] = 0.0
+        return stats_3x8
+    
+    # Calculer les heures supplémentaires en service continu
+    stats_hs_3x8 = calculer_heures_supplementaires_3x8_service_continu(df_3x8_original)
+    
+    if stats_hs_3x8.empty:
+        # Ajouter des colonnes vides si pas de données
+        stats_3x8['Total_Heures_Supp_Service_Continu'] = 0.0
+        stats_3x8['Nb_Jours_Service_Continu_Heures_Supp'] = 0
+        stats_3x8['Total_Jours_Service_Continu'] = 0
+        stats_3x8['Moy_Heures_Supp_Service_Continu'] = 0.0
+        return stats_3x8
+    
+    # Fusionner avec les statistiques existantes
+    stats_enrichi = pd.merge(
+        stats_3x8, 
+        stats_hs_3x8[['Gentile', 'Total_Heures_Supp_Service_Continu', 'Nb_Jours_Service_Continu_Heures_Supp', 
+                      'Total_Jours_Service_Continu', 'Moyenne_Heures_Supp_Service_Continu']], 
+        on='Gentile', 
+        how='left'
+    )
+    
+    # Renommer la colonne moyenne pour cohérence
+    stats_enrichi = stats_enrichi.rename(columns={
+        'Moyenne_Heures_Supp_Service_Continu': 'Moy_Heures_Supp_Service_Continu'
+    })
+    
+    # Remplir les valeurs manquantes avec 0
+    stats_enrichi['Total_Heures_Supp_Service_Continu'] = stats_enrichi['Total_Heures_Supp_Service_Continu'].fillna(0.0)
+    stats_enrichi['Nb_Jours_Service_Continu_Heures_Supp'] = stats_enrichi['Nb_Jours_Service_Continu_Heures_Supp'].fillna(0)
+    stats_enrichi['Total_Jours_Service_Continu'] = stats_enrichi['Total_Jours_Service_Continu'].fillna(0)
+    stats_enrichi['Moy_Heures_Supp_Service_Continu'] = stats_enrichi['Moy_Heures_Supp_Service_Continu'].fillna(0.0)
+    
+    return stats_enrichi
+
+
+def enrichir_stats_avec_arrets_maladie(stats_df, df_original, gentile_col='Gentile'):
+    """
+    Enrichit un DataFrame de statistiques avec les données d'arrêts maladie simplifiées.
+    Ajoute 3 colonnes : nombre d'arrêts 41, nombre d'arrêts 5H, moyenne heures par arrêt.
+    
+    Args:
+        stats_df: DataFrame des statistiques existantes
+        df_original: DataFrame original contenant les données
+        gentile_col: Nom de la colonne d'identifiant unique
+        
+    Returns:
+        pd.DataFrame: DataFrame enrichi avec les 3 colonnes d'arrêts maladie
+    """
+    if stats_df.empty or df_original.empty:
+        # Ajouter les colonnes vides si pas de données
+        stats_df['Nb_Arrêts_Maladie_41'] = 0
+        stats_df['Nb_Arrêts_Maladie_5H'] = 0
+        stats_df['Moy_Heures_Par_Arrêt_Maladie'] = 0.0
+        return stats_df
+    
+    # Calculer les statistiques d'arrêts maladie simplifiées
+    stats_maladie = calculer_statistiques_arrets_maladie_simplifiees(df_original)
+    
+    if stats_maladie.empty:
+        # Ajouter les colonnes vides si pas de données
+        stats_df['Nb_Arrêts_Maladie_41'] = 0
+        stats_df['Nb_Arrêts_Maladie_5H'] = 0
+        stats_df['Moy_Heures_Par_Arrêt_Maladie'] = 0.0
+        return stats_df
+    
+    # Fusionner avec les statistiques existantes
+    stats_enrichi = pd.merge(
+        stats_df,
+        stats_maladie[['Gentile', 'Nb_Arrêts_Maladie_41', 'Nb_Arrêts_Maladie_5H', 'Moy_Heures_Par_Arrêt_Maladie']],
+        on=gentile_col,
+        how='left'
+    )
+    
+    # Remplir les valeurs manquantes avec 0
+    stats_enrichi['Nb_Arrêts_Maladie_41'] = stats_enrichi['Nb_Arrêts_Maladie_41'].fillna(0).astype(int)
+    stats_enrichi['Nb_Arrêts_Maladie_5H'] = stats_enrichi['Nb_Arrêts_Maladie_5H'].fillna(0).astype(int)
+    stats_enrichi['Moy_Heures_Par_Arrêt_Maladie'] = stats_enrichi['Moy_Heures_Par_Arrêt_Maladie'].fillna(0.0)
+    
+    return stats_enrichi
+
+
+def enrichir_moyennes_avec_nouvelles_stats(moyennes_df, stats_enrichi_df):
+    """
+    Enrichit les moyennes par équipe avec les nouvelles statistiques.
+    
+    Args:
+        moyennes_df: DataFrame des moyennes par équipe existantes
+        stats_enrichi_df: DataFrame des statistiques enrichies par employé
+        
+    Returns:
+        pd.DataFrame: DataFrame des moyennes enrichi
+    """
+    if moyennes_df.empty or stats_enrichi_df.empty:
+        return moyennes_df
+    
+    # Identifier les nouvelles colonnes numériques à moyenner
+    nouvelles_colonnes = []
+    colonnes_possibles = [
+        'Nb_Arrêts_Maladie_41', 'Nb_Arrêts_Maladie_5H', 'Moy_Heures_Par_Arrêt_Maladie'
+    ]
+    
+    for col in colonnes_possibles:
+        if col in stats_enrichi_df.columns:
+            nouvelles_colonnes.append(col)
+    
+    if not nouvelles_colonnes:
+        return moyennes_df
+    
+    # Calculer les nouvelles moyennes par équipe
+    nouvelles_moyennes = stats_enrichi_df.groupby('Équipe')[nouvelles_colonnes].mean().reset_index()
+    
+    # Renommer les colonnes avec le préfixe Moy_ (sauf celles qui l'ont déjà)
+    colonnes_rename = {}
+    for col in nouvelles_colonnes:
+        if not col.startswith('Moy_') and not col.startswith('Moyenne_'):
+            colonnes_rename[col] = f'Moy_{col}'
+    
+    if colonnes_rename:
+        nouvelles_moyennes = nouvelles_moyennes.rename(columns=colonnes_rename)
+    
+    # Fusionner avec les moyennes existantes
+    moyennes_enrichi = pd.merge(moyennes_df, nouvelles_moyennes, on='Équipe', how='left')
+    
+    # Arrondir les nouvelles colonnes
+    for col in nouvelles_moyennes.columns:
+        if col != 'Équipe' and col in moyennes_enrichi.columns:
+            if 'Nb_' in col:
+                moyennes_enrichi[col] = moyennes_enrichi[col].fillna(0).round(1)
+            else:
+                moyennes_enrichi[col] = moyennes_enrichi[col].fillna(0.0).round(2)
+    
+    return moyennes_enrichi
+
+
+def calculer_heures_supplementaires_hors_astreinte(df_astreinte):
+    """
+    Calcule les heures supplémentaires hors cycle d'astreinte.
+    Les heures supplémentaires sont identifiées par des heures travaillées > 8h par jour
+    ou des codes spécifiques d'heures supplémentaires.
+    
+    Args:
+        df_astreinte: DataFrame contenant les données d'astreinte
+        
+    Returns:
+        pd.DataFrame: DataFrame avec les statistiques d'heures supplémentaires par employé
+    """
+    if df_astreinte.empty:
+        return pd.DataFrame()
+    
+    # Copie du DataFrame pour éviter les modifications
+    df_hs = df_astreinte.copy()
+    
+    # Filtrer les jours de weekend et jours fériés
+    if 'Désignation jour' in df_hs.columns:
+        df_hs = df_hs[~df_hs['Désignation jour'].isin(JOURS_WEEKEND)].copy()
+    
+    if 'Jour férié' in df_hs.columns:
+        df_hs = df_hs[df_hs['Jour férié'] != 'X'].copy()
+    
+    # Exclure les jours d'astreinte (on veut les heures supplémentaires HORS astreinte)
+    if 'Astreinte' in df_hs.columns:
+        df_hs = df_hs[df_hs['Astreinte'] != 'I'].copy()
+    
+    if df_hs.empty:
+        return pd.DataFrame()
+    
+    # Calculer les heures supplémentaires par ligne
+    df_hs['Heures_Supplementaires'] = df_hs.apply(_calculer_heures_supp_ligne, axis=1)
+    
+    # Calculer les statistiques par employé
+    stats_hs = df_hs.groupby(['Gentile', 'Equipe (Lib.)', 'Nom', 'Prénom']).agg(
+        Total_Heures_Supplementaires=('Heures_Supplementaires', 'sum'),
+        Nb_Jours_Heures_Supplementaires=('Heures_Supplementaires', lambda x: sum(x > 0)),
+        Moyenne_Heures_Supp_Par_Jour=('Heures_Supplementaires', lambda x: x[x > 0].mean() if sum(x > 0) > 0 else 0)
+    ).reset_index()
+    
+    # Renommer les colonnes
+    stats_hs = stats_hs.rename(columns={
+        'Equipe (Lib.)': 'Équipe'
+    })
+    
+    # Arrondir les valeurs
+    stats_hs['Total_Heures_Supplementaires'] = stats_hs['Total_Heures_Supplementaires'].round(2)
+    stats_hs['Moyenne_Heures_Supp_Par_Jour'] = stats_hs['Moyenne_Heures_Supp_Par_Jour'].round(2)
+    
+    return stats_hs
+
+
+def calculer_heures_supplementaires_3x8_service_continu(df_3x8):
+    """
+    Calcule les heures supplémentaires des employés 3x8 pendant le service continu.
+    Le service continu inclut les weekends et jours fériés.
+    
+    Args:
+        df_3x8: DataFrame contenant les données des employés 3x8
+        
+    Returns:
+        pd.DataFrame: DataFrame avec les statistiques d'heures supplémentaires 3x8
+    """
+    if df_3x8.empty:
+        return pd.DataFrame()
+    
+    # Copie du DataFrame
+    df_hs_3x8 = df_3x8.copy()
+    
+    # Pour le service continu, on garde TOUS les jours (y compris weekends et fériés)
+    # mais on se concentre sur les heures supplémentaires
+    
+    # Calculer les heures supplémentaires par ligne
+    df_hs_3x8['Heures_Supplementaires'] = df_hs_3x8.apply(_calculer_heures_supp_ligne, axis=1)
+    
+    # Identifier les jours de service continu (weekends + jours fériés)
+    df_hs_3x8['Est_Service_Continu'] = False
+    
+    if 'Désignation jour' in df_hs_3x8.columns:
+        df_hs_3x8['Est_Service_Continu'] |= df_hs_3x8['Désignation jour'].isin(JOURS_WEEKEND)
+    
+    if 'Jour férié' in df_hs_3x8.columns:
+        df_hs_3x8['Est_Service_Continu'] |= (df_hs_3x8['Jour férié'] == 'X')
+    
+    # Filtrer uniquement les jours de service continu
+    df_service_continu = df_hs_3x8[df_hs_3x8['Est_Service_Continu']].copy()
+    
+    if df_service_continu.empty:
+        return pd.DataFrame()
+    
+    # Calculer les statistiques par employé pour le service continu
+    stats_hs_3x8 = df_service_continu.groupby(['Gentile', 'Equipe (Lib.)', 'Nom', 'Prénom']).agg(
+        Total_Heures_Supp_Service_Continu=('Heures_Supplementaires', 'sum'),
+        Nb_Jours_Service_Continu_Heures_Supp=('Heures_Supplementaires', lambda x: sum(x > 0)),
+        Total_Jours_Service_Continu=('Est_Service_Continu', 'sum'),
+        Moyenne_Heures_Supp_Service_Continu=('Heures_Supplementaires', lambda x: x[x > 0].mean() if sum(x > 0) > 0 else 0)
+    ).reset_index()
+    
+    # Renommer les colonnes
+    stats_hs_3x8 = stats_hs_3x8.rename(columns={
+        'Equipe (Lib.)': 'Équipe'
+    })
+    
+    # Arrondir les valeurs
+    stats_hs_3x8['Total_Heures_Supp_Service_Continu'] = stats_hs_3x8['Total_Heures_Supp_Service_Continu'].round(2)
+    stats_hs_3x8['Moyenne_Heures_Supp_Service_Continu'] = stats_hs_3x8['Moyenne_Heures_Supp_Service_Continu'].round(2)
+    
+    return stats_hs_3x8
+
+
+def calculer_statistiques_arrets_maladie_simplifiees(df):
+    """
+    Calcule les statistiques d'arrêts maladie simplifiées : 
+    - Nombre d'arrêts code 41
+    - Nombre d'arrêts code 5H  
+    - Moyenne d'heures par arrêt (tous codes confondus)
+    
+    Args:
+        df: DataFrame contenant toutes les données
+        
+    Returns:
+        pd.DataFrame: Statistiques par employé avec 3 colonnes
+    """
+    if df.empty:
+        return pd.DataFrame()
+    
+    # Filtrer les lignes avec les codes de maladie
+    df_maladie = df[df['Code'].isin(['41', '5H'])].copy()
+    
+    if df_maladie.empty:
+        return pd.DataFrame()
+    
+    # Calculer les heures d'absence par ligne
+    df_maladie['Heures_Absence'] = df_maladie.apply(_calculer_heures_absence_ligne, axis=1)
+    
+    # Calculer les statistiques par employé
+    stats_par_employe = []
+    
+    for gentile in df_maladie['Gentile'].unique():
+        df_employe = df_maladie[df_maladie['Gentile'] == gentile]
+        
+        # Compter les arrêts par code
+        nb_arrets_41 = len(df_employe[df_employe['Code'] == '41'])
+        nb_arrets_5h = len(df_employe[df_employe['Code'] == '5H'])
+        
+        # Calculer la moyenne d'heures par arrêt (tous codes confondus)
+        total_heures = df_employe['Heures_Absence'].sum()
+        total_arrets = len(df_employe)
+        moy_heures_par_arret = total_heures / total_arrets if total_arrets > 0 else 0.0
+        
+        # Récupérer les infos de l'employé
+        info_employe = df_employe.iloc[0]
+        
+        stats_par_employe.append({
+            'Gentile': gentile,
+            'Équipe': info_employe['Equipe (Lib.)'],
+            'Nom': info_employe['Nom'],
+            'Prénom': info_employe['Prénom'],
+            'Nb_Arrêts_Maladie_41': nb_arrets_41,
+            'Nb_Arrêts_Maladie_5H': nb_arrets_5h,
+            'Moy_Heures_Par_Arrêt_Maladie': round(moy_heures_par_arret, 2)
+        })
+    
+    return pd.DataFrame(stats_par_employe)
+
+
+def _calculer_heures_supp_ligne(row):
+    """
+    Calcule les heures supplémentaires pour une ligne donnée.
+    Les heures supplémentaires peuvent être :
+    - Des heures travaillées > 8h par jour
+    - Des codes spécifiques d'heures supplémentaires
+    
+    Args:
+        row: Ligne du DataFrame
+        
+    Returns:
+        float: Nombre d'heures supplémentaires
+    """
+    try:
+        # Vérifier s'il y a un code spécifique d'heures supplémentaires
+        code = str(row.get('Code', '')).strip().upper() if pd.notna(row.get('Code', '')) else ''
+        
+        # Codes d'heures supplémentaires courants
+        codes_heures_supp = ['HS', 'HSN', 'HSJ', 'HSUP', 'H.SUP']
+        
+        if any(code_hs in code for code_hs in codes_heures_supp):
+            # Si c'est un code d'heures supplémentaires avec une valeur
+            if pd.notna(row.get('Valeur', '')) and row.get('Valeur', '') != '':
+                valeur = float(row.get('Valeur', 0))
+                unite = str(row.get('Dés. unité', '')).strip().lower() if pd.notna(row.get('Dés. unité', '')) else ''
+                
+                if 'heure' in unite:
+                    return max(0, valeur)
+                elif 'jour' in unite:
+                    return max(0, valeur * 8.0)  # Conversion jours en heures
+                else:
+                    return max(0, valeur)  # Par défaut, considérer comme des heures
+            else:
+                return 0.0
+        
+        # Sinon, calculer les heures supplémentaires basées sur les heures travaillées
+        heures_travaillees = _calculer_heures_travaillees_ligne(row)
+        
+        # Les heures supplémentaires sont les heures au-delà de 8h par jour
+        if heures_travaillees > 8.0:
+            return heures_travaillees - 8.0
+        else:
+            return 0.0
+            
+    except (ValueError, TypeError):
+        return 0.0
+
+
+def _calculer_heures_travaillees_ligne(row):
+    """
+    Calcule les heures travaillées pour une ligne (similaire au module calculateurs.py).
+    
+    Args:
+        row: Ligne du DataFrame
+        
+    Returns:
+        float: Nombre d'heures travaillées
+    """
+    try:
+        # Si on a un code (absence ou autre)
+        if pd.notna(row.get('Code', '')) and row.get('Code', '') not in ['', ' ']:
+            # Cas spécial : code "80TH" = 8 heures travaillées
+            if str(row.get('Code', '')).strip().upper() == '80TH':
+                return 8.0
+            
+            # Si on a une valeur numérique avec le code
+            if pd.notna(row.get('Valeur', '')) and row.get('Valeur', '') != '':
+                valeur = float(row.get('Valeur', 0))
+                if valeur >= 0:
+                    # Vérifier l'unité dans la colonne "Dés. unité"
+                    unite = str(row.get('Dés. unité', '')).strip().lower() if pd.notna(row.get('Dés. unité', '')) else ''
+                    
+                    if 'jour' in unite:
+                        # Si l'unité est en jours : valeur = nombre de jours travaillés
+                        heures_travaillees = valeur * 8.0
+                        return min(8.0, heures_travaillees)  # Maximum 8 heures par jour
+                    elif 'heure' in unite:
+                        # Si l'unité est en heures : valeur = nombre d'heures travaillées
+                        return min(8.0, valeur)  # Maximum 8 heures par jour
+                    else:
+                        # Si pas d'unité : valeur = nombre d'heures d'absence (ancien comportement)
+                        heures_travaillees = 8.0 - valeur
+                    return max(0, heures_travaillees)  # Minimum 0 heures
+                else:
+                    return 8.0  # Valeur négative = journée complète
+            else:
+                # Code d'absence sans valeur = 8h d'absence = 0h travaillées
+                return 0.0
+        else:
+            # Pas de code = journée complète travaillée
+            return 8.0
+    except (ValueError, TypeError):
+        # Si conversion impossible, considérer comme journée complète
+        return 8.0
+
+
+def _calculer_heures_absence_ligne(row):
+    """
+    Calcule les heures d'absence pour une ligne donnée.
+    
+    Args:
+        row: Ligne du DataFrame
+        
+    Returns:
+        float: Nombre d'heures d'absence
+    """
+    try:
+        # Si on a une valeur numérique
+        if pd.notna(row.get('Valeur', '')) and row.get('Valeur', '') != '':
+            valeur = float(row.get('Valeur', 0))
+            if valeur >= 0:
+                # Vérifier l'unité dans la colonne "Dés. unité"
+                unite = str(row.get('Dés. unité', '')).strip().lower() if pd.notna(row.get('Dés. unité', '')) else ''
+                
+                if 'jour' in unite:
+                    # Si l'unité est en jours : valeur = nombre de jours d'absence
+                    return valeur * 8.0  # Conversion en heures
+                elif 'heure' in unite:
+                    # Si l'unité est en heures : valeur = nombre d'heures d'absence
+                    return valeur
+                else:
+                    # Si pas d'unité : considérer comme des heures d'absence
+                    return valeur
+            else:
+                return 8.0  # Valeur négative = journée complète d'absence
+        else:
+            # Code d'absence sans valeur = 8h d'absence
+            return 8.0
+    except (ValueError, TypeError):
+        # Si conversion impossible, considérer comme journée complète d'absence
+        return 8.0 

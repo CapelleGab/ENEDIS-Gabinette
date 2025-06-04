@@ -67,7 +67,9 @@ COLONNES_FINALES = [
     'Nom', 'Prénom', 'Équipe', 'Jours_Présents_Complets', 
     'Jours_Partiels', 'Total_Jours_Travaillés', 'Total_Heures_Travaillées', 
     'Jours_Complets', 'Jours_Absents', 'Total_Heures_Absence', 
-    'Présence_%_365j', 'Moyenne_Heures_Par_Jour_Présent'
+    'Présence_%_365j',
+    # Nouvelles colonnes pour arrêts maladie (simplifiées)
+    'Nb_Arrêts_Maladie_41', 'Nb_Arrêts_Maladie_5H', 'Moy_Heures_Par_Arrêt_Maladie'
 ]
 
 NOMS_FEUILLES = {

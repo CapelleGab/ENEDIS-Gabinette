@@ -271,7 +271,7 @@ def calculer_statistiques_3x8(df_3x8):
     
     # Réorganiser les colonnes
     colonnes_ordre = [
-        'Nom', 'Prénom', 'Équipe', 
+        'Gentile', 'Nom', 'Prénom', 'Équipe', 
         'Jours_Travaillés', 'Jours_Absents_Partiels',
         'Total_Jours_Absents', 'Total_Jours',
         'Postes_Matin', 'Postes_Apres_Midi', 'Postes_Nuit',
