@@ -45,7 +45,7 @@ class ExportManager:
             if stats_3x8 is not None and moyennes_3x8 is not None:
                 content_msg += f"\n🔄 3x8 : {len(stats_3x8)} employés, {len(moyennes_3x8)} équipes"
             if arrets_maladie_tous is not None:
-                content_msg += f"\n🏥 Arrêts maladie : {len(arrets_maladie_tous)} employés (tous services)"
+                content_msg += f"\n📊 TOUS : {len(arrets_maladie_tous)} employés (arrêts maladie et heures supplémentaires)"
             
             messagebox.showinfo(
                 "Export réussi",

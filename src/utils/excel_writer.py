@@ -20,7 +20,7 @@ def sauvegarder_excel(stats_final, moyennes_equipe, fichier_path=None, stats_tip
         moyennes_tip (pd.DataFrame, optional): Moyennes par équipe TIP (hors astreinte)
         stats_3x8 (pd.DataFrame, optional): Statistiques par employé 3x8
         moyennes_3x8 (pd.DataFrame, optional): Moyennes par équipe 3x8
-        arrets_maladie_tous (pd.DataFrame, optional): Statistiques d'arrêts maladie pour tous les employés
+        arrets_maladie_tous (pd.DataFrame, optional): Statistiques d'arrêts maladie et heures supplémentaires pour tous les employés
     """
     # Utiliser le chemin fourni ou celui de la config par défaut
     excel_path = fichier_path if fichier_path is not None else FICHIER_EXCEL
