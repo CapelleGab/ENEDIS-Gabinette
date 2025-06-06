@@ -8,6 +8,8 @@ author : CAPELLE Gabin
 
 import pandas as pd
 from config import JOURS_WEEKEND, HORAIRE_DEBUT_REFERENCE, HORAIRE_FIN_REFERENCE
+from config import CODES_EQUIPES_ASTREINTE, CODES_EQUIPES_HORS_ASTREINTE
+from .data_loader import preparer_donnees_3x8
 
 
 def enrichir_stats_astreinte_avec_heures_supp(stats_astreinte, df_astreinte_original):
@@ -763,26 +765,44 @@ def _calculer_heures_absence_ligne(row):
 
 def calculer_statistiques_arrets_maladie_tous_employes(df):
     """
-    Calcule les statistiques d'arrêts maladie pour TOUS les employés, 
-    indépendamment de leur équipe.
-    Inclut également les heures supplémentaires pour tous les employés.
-    
-    Args:
-        df: DataFrame contenant toutes les données
-        
-    Returns:
-        pd.DataFrame: DataFrame avec les statistiques d'arrêts maladie et heures supplémentaires
+    Calcule les statistiques d'arrêts maladie pour AUTRES (employés n'étant ni ASTREINTE, ni TIP, ni 3x8).
+    Inclut également les heures supplémentaires pour ces employés.
     """
     try:
         if df.empty:
             return pd.DataFrame()
-        
+
+        # Exclure les équipes ASTREINTE et TIP
+        df_autres = df[
+            (~df['Equipe (Lib.)'].isin(CODES_EQUIPES_ASTREINTE)) &
+            (~df['Equipe (Lib.)'].isin(CODES_EQUIPES_HORS_ASTREINTE))
+        ].copy()
+
+        # Exclure les employés 3x8 (tous leurs jours)
+        # On identifie les Gentile des 3x8 à partir de preparer_donnees_3x8
+        _, df_3x8 = preparer_donnees_3x8(df)
+        gentiles_3x8 = df_3x8['Gentile'].unique() if not df_3x8.empty else []
+        df_autres = df_autres[~df_autres['Gentile'].isin(gentiles_3x8)].copy()
+
+        # On continue le calcul sur df_autres
+        if df_autres.empty:
+            return pd.DataFrame()
+        return _calculer_statistiques_arrets_maladie_tous_employes_core(df_autres)
+    except Exception as e:
+        print(f"Erreur lors du calcul des arrêts maladie AUTRES: {str(e)}")
+        if df is not None:
+            print(f"Colonnes disponibles: {df.columns.tolist()}")
+        return pd.DataFrame()
+
+
+def _calculer_statistiques_arrets_maladie_tous_employes_core(df):
+    try:
         # Vérifier les colonnes nécessaires
         for colonne in ['Code', 'Jour']:
             if colonne not in df.columns:
                 print(f"Colonne manquante pour le calcul des arrêts maladie: '{colonne}'")
                 return pd.DataFrame()
-        
+
         # Vérifier si la colonne Gentile existe, sinon utiliser un identifiant alternatif
         id_col = 'Gentile'
         if id_col not in df.columns:
@@ -794,16 +814,16 @@ def calculer_statistiques_arrets_maladie_tous_employes(df):
             else:
                 print("Colonnes Nom et/ou Prénom manquantes")
                 return pd.DataFrame()
-        
+
         # Filtrer les lignes avec les codes de maladie
         df_maladie = df[df['Code'].isin(['41', '5H'])].copy()
-        
+
         # Calculer les heures supplémentaires pour tous les employés
         stats_hs = calculer_heures_supplementaires_hors_astreinte_tous_employes(df)
-        
+
         # Initialiser le DataFrame final
         stats_par_employe = []
-        
+
         # Si aucun arrêt maladie n'est trouvé, on utilisera uniquement les données d'heures supplémentaires
         if df_maladie.empty:
             print("Aucun arrêt maladie trouvé (codes 41 ou 5H)")
@@ -821,42 +841,42 @@ def calculer_statistiques_arrets_maladie_tous_employes(df):
                         'Heures_Supp': row['Heures_Supp']
                     })
             return pd.DataFrame(stats_par_employe)
-        
+
         # Calculer les heures d'absence par ligne
         df_maladie['Heures_Absence'] = df_maladie.apply(_calculer_heures_absence_ligne, axis=1)
-        
+
         # Trier par employé et date
         df_maladie = df_maladie.sort_values([id_col, 'Jour'])
-        
+
         # Calculer les statistiques par employé pour les arrêts maladie
         for gentile in df_maladie[id_col].unique():
             df_employe = df_maladie[df_maladie[id_col] == gentile].copy()
-            
+
             # Compter les jours d'arrêts par code
             nb_jours_41 = len(df_employe[df_employe['Code'] == '41'])
             nb_jours_5h = len(df_employe[df_employe['Code'] == '5H'])
-            
+
             # Calculer le nombre de périodes d'arrêts (séquences continues)
             df_employe['Jour_Date'] = pd.to_datetime(df_employe['Jour'], format='%d/%m/%Y', errors='coerce')
             df_employe = df_employe.sort_values('Jour_Date')
-            
+
             # Créer un groupe pour chaque période continue
             df_employe['diff_jours'] = df_employe['Jour_Date'].diff().dt.days
             # Une nouvelle période commence quand la différence de jours est > 1 (plus d'un jour d'écart)
             df_employe['nouvelle_periode'] = (df_employe['diff_jours'] > 1) | pd.isna(df_employe['diff_jours'])
             df_employe['id_periode'] = df_employe['nouvelle_periode'].cumsum()
-            
+
             # Compter le nombre de périodes uniques
             nb_periodes = df_employe['id_periode'].nunique()
-            
+
             # Calculer la moyenne d'heures par jour d'arrêt (tous codes confondus)
             total_heures = df_employe['Heures_Absence'].sum()
             total_jours = len(df_employe)
             moy_heures_par_arret = total_heures / total_jours if total_jours > 0 else 0.0
-            
+
             # Récupérer les infos de l'employé
             info_employe = df_employe.iloc[0]
-            
+
             # Récupérer les heures supplémentaires si disponibles
             heures_supp = 0.0
             if not stats_hs.empty and 'Heures_Supp' in stats_hs.columns:
@@ -864,7 +884,7 @@ def calculer_statistiques_arrets_maladie_tous_employes(df):
                 employe_hs = stats_hs[stats_hs[id_col] == gentile]
                 if not employe_hs.empty:
                     heures_supp = employe_hs.iloc[0]['Heures_Supp']
-            
+
             stats_par_employe.append({
                 'Nom': info_employe.get('Nom', 'Inconnu'),
                 'Prénom': info_employe.get('Prénom', 'Inconnu'),
@@ -875,7 +895,7 @@ def calculer_statistiques_arrets_maladie_tous_employes(df):
                 'Moy_Heures_Par_Arrêt_Maladie': round(moy_heures_par_arret, 2),
                 'Heures_Supp': heures_supp
             })
-        
+
         # Ajouter les employés qui ont des heures supplémentaires mais pas d'arrêts maladie
         if not stats_hs.empty:
             for index, row in stats_hs.iterrows():
@@ -892,9 +912,8 @@ def calculer_statistiques_arrets_maladie_tous_employes(df):
                         'Moy_Heures_Par_Arrêt_Maladie': 0.0,
                         'Heures_Supp': row['Heures_Supp']
                     })
-        
+
         return pd.DataFrame(stats_par_employe)
-    
     except Exception as e:
         print(f"Erreur lors du calcul des arrêts maladie et heures supplémentaires: {str(e)}")
         if df is not None:

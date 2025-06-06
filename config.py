@@ -82,5 +82,5 @@ NOMS_FEUILLES = {
     'tip_moyennes': 'TIP_EQUIPES_MOYENNES',
     '3x8_statistiques': '3x8_STATS',
     '3x8_moyennes': '3x8_EQUIPES_MOYENNES',
-    'arrets_maladie': 'TOUS'
+    'arrets_maladie': 'AUTRES'
 } 
