@@ -211,8 +211,68 @@ class StructuredLogger:
             ""
         ])
         
+        # Ajouter les logs globaux existants
         for log in self.logs["Global"]:
             summary.append(f"• {log}")
+        
+        # Calculer et ajouter les totaux globaux
+        total_employes = 0
+        total_heures_supp = 0
+        total_periodes_arrets = 0
+        total_jours_41 = 0
+        total_jours_5h = 0
+        
+        # Parcourir les logs de chaque catégorie d'employés pour extraire les valeurs
+        for employee_type, logs in self.logs["Employés"].items():
+            for log in logs:
+                # Extraire le nombre d'employés
+                if "Nombre d'employés" in log:
+                    try:
+                        nb_employes = int(log.split(": ")[1])
+                        total_employes += nb_employes
+                    except (ValueError, IndexError):
+                        pass
+                
+                # Extraire les heures supplémentaires
+                if "Total heures supplémentaires" in log:
+                    try:
+                        hs_value = log.split(": ")[1].split("h")[0]
+                        total_heures_supp += float(hs_value)
+                    except (ValueError, IndexError):
+                        pass
+                
+                # Extraire les périodes d'arrêts
+                if "Total périodes d'arrêts maladie" in log:
+                    try:
+                        periodes = int(log.split(": ")[1])
+                        total_periodes_arrets += periodes
+                    except (ValueError, IndexError):
+                        pass
+                
+                # Extraire les jours d'arrêts maladie
+                if "Total jours arrêts maladie" in log and "41=" in log and "5H=" in log:
+                    try:
+                        jours_parts = log.split(": ")[1]
+                        jours_41 = int(jours_parts.split("41=")[1].split(",")[0])
+                        jours_5h = int(jours_parts.split("5H=")[1])
+                        total_jours_41 += jours_41
+                        total_jours_5h += jours_5h
+                    except (ValueError, IndexError):
+                        pass
+        
+        # Ajouter les totaux globaux au résumé
+        if total_employes > 0:
+            summary.append(f"• Total employés toutes catégories: {total_employes}")
+        
+        if total_heures_supp > 0:
+            moy_heures_supp = total_heures_supp / total_employes if total_employes > 0 else 0
+            summary.append(f"• Total heures supplémentaires: {total_heures_supp:.1f}h (moy: {moy_heures_supp:.1f}h)")
+        
+        if total_periodes_arrets > 0:
+            summary.append(f"• Total périodes d'arrêts maladie: {total_periodes_arrets}")
+        
+        if total_jours_41 > 0 or total_jours_5h > 0:
+            summary.append(f"• Total jours arrêts maladie: 41={total_jours_41}, 5H={total_jours_5h}")
         
         summary.append("")
         summary.append("="*80)
