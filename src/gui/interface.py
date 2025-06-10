@@ -266,5 +266,13 @@ class PMTAnalyticsInterface:
         )
 
     def export_summary(self):
-        """Exporte le résumé vers un fichier."""
-        self.export_manager.export_summary(self.summary_content) 
+        """Exporte le résumé vers un fichier texte."""
+        self.export_manager.export_summary(
+            self.stats_final,
+            self.moyennes_equipe,
+            self.stats_tip,
+            self.moyennes_tip,
+            self.stats_3x8,
+            self.moyennes_3x8,
+            self.arrets_maladie_tous
+        ) 

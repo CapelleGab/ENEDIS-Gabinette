@@ -266,52 +266,80 @@ class SummaryDisplayer:
     
     def __init__(self, log_manager):
         self.log_manager = log_manager
+        from src.utils.structured_logger import StructuredLogger
+        self.structured_logger = StructuredLogger(log_manager)
     
     def display_summary(self, stats_final, moyennes_equipe, csv_file_path, stats_tip=None, moyennes_tip=None, stats_3x8=None, moyennes_3x8=None):
         """Affiche le résumé de l'analyse dans le journal d'exécution et retourne le contenu."""
         if stats_final is None or moyennes_equipe is None:
             return None
         
-        # Liste pour capturer le contenu du résumé
-        summary_lines = []
+        # Réinitialiser le logger
+        self.structured_logger.clear()
         
-        # Calculer les statistiques globales
-        nb_employes = len(stats_final)
-        nb_equipes = len(moyennes_equipe)
+        # En-tête
+        self._display_header()
         
-        # Statistiques générales
-        moy_heures = stats_final['Total_Heures_Travaillées'].mean()
-        moy_jours = stats_final['Total_Jours_Travaillés'].mean()
-        moy_presence = stats_final['Présence_%_365j'].mean()
+        # Générer les statistiques pour chaque catégorie
+        if stats_final is not None:
+            self.structured_logger.log_employee_stats(stats_final, "ASTREINTE")
+            
+            # Statistiques par équipe pour ASTREINTE
+            if moyennes_equipe is not None:
+                for _, team in moyennes_equipe.iterrows():
+                    heures_col = self._find_hours_column(moyennes_equipe)
+                    if heures_col:
+                        heures_moy = team[heures_col]
+                        self.structured_logger.log(
+                            f"Équipe {team['Équipe']}: {team.get('Nb_Employés', 0)} employés, {heures_moy:.1f}h",
+                            "Employés", "ASTREINTE"
+                        )
         
-        # Top 5 employés par heures travaillées
-        top_employes = stats_final.nlargest(5, 'Total_Heures_Travaillées')
+        if stats_tip is not None:
+            self.structured_logger.log_employee_stats(stats_tip, "TIP")
+            
+            # Statistiques par équipe pour TIP
+            if moyennes_tip is not None:
+                for _, team in moyennes_tip.iterrows():
+                    heures_col = self._find_hours_column(moyennes_tip)
+                    if heures_col:
+                        heures_moy = team[heures_col]
+                        self.structured_logger.log(
+                            f"Équipe {team['Équipe']}: {team.get('Nb_Employés', 0)} employés, {heures_moy:.1f}h",
+                            "Employés", "TIP"
+                        )
         
-        # Trouver la meilleure équipe
-        heures_col = self._find_hours_column(moyennes_equipe)
-        best_team = None
-        if heures_col and not moyennes_equipe.empty:
-            best_team = moyennes_equipe.loc[moyennes_equipe[heures_col].idxmax()]
+        if stats_3x8 is not None:
+            self.structured_logger.log_employee_stats(stats_3x8, "3x8")
+            
+            # Statistiques par équipe pour 3x8
+            if moyennes_3x8 is not None:
+                for _, team in moyennes_3x8.iterrows():
+                    moy_jours = team.get('Moy_Jours_Travaillés', 0)
+                    self.structured_logger.log(
+                        f"Équipe {team['Équipe']}: {team.get('Nb_Employés', 0)} employés, {moy_jours:.1f} jours",
+                        "Employés", "3x8"
+                    )
         
-        # Afficher le résumé et capturer le contenu
-        summary_lines.extend(self._display_header())
-        summary_lines.extend(self._display_general_stats(nb_employes, nb_equipes, moy_heures, moy_jours, moy_presence, moyennes_equipe, heures_col))
-        summary_lines.extend(self._display_best_team(best_team, heures_col))
-        summary_lines.extend(self._display_team_breakdown(moyennes_equipe, heures_col))
+        # Génération des statistiques par agence
+        dfs_to_check = [df for df in [stats_final, stats_tip, stats_3x8] if df is not None and not df.empty]
+        for df in dfs_to_check:
+            if "FSDUM (Lib)" in df.columns:
+                self.structured_logger.log_agency_stats(df)
         
-        # Afficher les statistiques TIP si disponibles
-        if stats_tip is not None and moyennes_tip is not None:
-            summary_lines.extend(self._display_tip_section(stats_tip, moyennes_tip, heures_col))
+        # Génération des statistiques globales
+        self._add_global_stats(stats_final, stats_tip, stats_3x8)
         
-        # Afficher les statistiques 3x8 si disponibles
-        if stats_3x8 is not None and moyennes_3x8 is not None:
-            summary_lines.extend(self._display_3x8_section(stats_3x8, moyennes_3x8, heures_col))
+        # Afficher les meilleurs employés
+        self._add_top_employees(stats_final, stats_tip, stats_3x8)
         
-        # Afficher tous les TOP à la fin
-        summary_lines.extend(self._display_all_tops(top_employes, stats_tip, stats_3x8))
+        # Formater et afficher le résumé
+        summary_content = self.structured_logger.format_summary()
         
-        # Retourner le contenu du résumé
-        return '\n'.join(summary_lines)
+        # Afficher le résumé dans le log manager
+        self.log_manager.log_message("\n" + summary_content)
+        
+        return summary_content
     
     def _find_hours_column(self, moyennes_equipe):
         """Trouve la colonne des heures travaillées."""
@@ -322,471 +350,62 @@ class SummaryDisplayer:
     
     def _display_header(self):
         """Affiche l'en-tête du résumé."""
-        lines = [
-            "\n" + "="*60,
-            "📊 RÉSUMÉ DE L'ANALYSE DES STATISTIQUES PMT",
-            "="*60,
-            ""
-        ]
-        for line in lines:
-            self.log_manager.log_message(line)
-        return lines
+        header_msg = "📊 RÉSUMÉ DE L'ANALYSE DES STATISTIQUES PMT"
+        self.structured_logger.log(header_msg, "Global")
     
-    def _display_general_stats(self, nb_employes, nb_equipes, moy_heures, moy_jours, moy_presence, moyennes_equipe, heures_col):
-        """Affiche les statistiques générales."""
-        lines = [
-            "📈 STATISTIQUES GÉNÉRALES",
-            f"• Nombre d'employés analysés : {nb_employes}",
-            f"• Nombre d'équipes : {nb_equipes}",
-            f"• Moyenne d'heures travaillées par employé : {moy_heures:.1f}h ({moy_jours:.1f} jours)",
-            f"• Taux de présence moyen : {moy_presence:.1f}%"
-        ]
-        
-        # Calculer la moyenne pondérée des heures travaillées des 4 agences d'astreinte
-        if heures_col and not moyennes_equipe.empty:
-            total_heures_agences = 0
-            total_employes_agences = 0
-            
-            for _, equipe in moyennes_equipe.iterrows():
-                nb_emp = equipe.get('Nb_Employés', 0)
-                heures_moy = equipe.get(heures_col, 0)
-                if nb_emp > 0 and heures_moy > 0:
-                    total_heures_agences += heures_moy * nb_emp
-                    total_employes_agences += nb_emp
-            
-            if total_employes_agences > 0:
-                moyenne_ponderee_heures = total_heures_agences / total_employes_agences
-                moyenne_ponderee_jours = moyenne_ponderee_heures / 8  # Conversion en jours (8h = 1 jour)
-                
-                lines.extend([
-                    f"• Moyenne pondérée des 4 agences : {moyenne_ponderee_heures:.1f}h ({moyenne_ponderee_jours:.1f} jours)"
-                ])
-        
-        lines.append("")
-        
-        for line in lines:
-            self.log_manager.log_message(line)
-        return lines
-    
-    def _display_best_team(self, best_team, heures_col):
-        """Affiche la meilleure équipe."""
-        if heures_col and best_team is not None:
-            heures_moy = best_team[heures_col]
-            jours_moy = heures_moy / 8  # Conversion en jours
-            lines = [
-                "🏢 MEILLEURE ÉQUIPE (par moyenne d'heures)",
-                f"• {best_team['Équipe']} : {heures_moy:.1f}h ({jours_moy:.1f} jours) en moyenne"
-            ]
-            if 'Nb_Employés' in best_team:
-                lines.append(f"• {best_team['Nb_Employés']:.0f} employés")
-            lines.append("")
-            
-            for line in lines:
-                self.log_manager.log_message(line)
-            return lines
-        return []
-    
-    def _display_team_breakdown(self, moyennes_equipe, heures_col):
-        """Affiche la répartition par équipe."""
-        lines = ["📋 RÉPARTITION PAR ÉQUIPE"]
-        
-        # Variables pour calculer la moyenne pondérée
-        total_heures_ponderees = 0
+    def _add_global_stats(self, stats_final, stats_tip, stats_3x8):
+        """Ajoute les statistiques globales"""
         total_employes = 0
+        total_heures = 0
         
-        # Variables pour les heures supplémentaires par agence
-        agences_stats = {}
+        # Compter le total des employés
+        if stats_final is not None:
+            nb_employes = len(stats_final)
+            total_employes += nb_employes
+            if 'Total_Heures_Travaillées' in stats_final.columns:
+                total_heures += stats_final['Total_Heures_Travaillées'].sum()
         
-        for _, team in moyennes_equipe.iterrows():
-            nb_emp = team.get('Nb_Employés', 'N/A')
-            if heures_col:
-                heures_moy = team[heures_col]
-                jours_moy = heures_moy / 8  # Conversion en jours
-                line = f"• {team['Équipe']} : {nb_emp} employés, {heures_moy:.1f}h moy. ({jours_moy:.1f} jours)"
-                
-                # Ajouter les informations d'arrêts maladie si disponibles
-                if 'Moy_Nb_Périodes_Arrêts' in team:
-                    line += f", {team['Moy_Nb_Périodes_Arrêts']:.1f} périodes d'arrêt"
-                
-                if 'Moy_Moy_Heures_Par_Arrêt_Maladie' in team:
-                    line += f", {team['Moy_Moy_Heures_Par_Arrêt_Maladie']:.1f}h/arrêt"
-                
-                # Ajouter les heures supplémentaires si disponibles
-                if 'Moy_Heures_Supp' in team:
-                    line += f", {team['Moy_Heures_Supp']:.1f}h supp."
-                
-                lines.append(line)
-                
-                # Calcul pour la moyenne pondérée
-                if isinstance(nb_emp, (int, float)) and nb_emp > 0:
-                    total_heures_ponderees += heures_moy * nb_emp
-                    total_employes += nb_emp
-                    
-                    # Collecte des statistiques par agence (premier mot du nom d'équipe)
-                    agence = team['Équipe'].split()[0]
-                    if agence not in agences_stats:
-                        agences_stats[agence] = {
-                            'total_heures_supp': 0,
-                            'total_employes': 0,
-                            'equipes': []
-                        }
-                    
-                    heures_supp = team.get('Moy_Heures_Supp', 0)
-                    agences_stats[agence]['total_heures_supp'] += heures_supp * nb_emp
-                    agences_stats[agence]['total_employes'] += nb_emp
-                    agences_stats[agence]['equipes'].append(team['Équipe'])
-            else:
-                lines.append(f"• {team['Équipe']} : {nb_emp} employés")
+        if stats_tip is not None:
+            nb_employes_tip = len(stats_tip)
+            total_employes += nb_employes_tip
+            if 'Total_Heures_Travaillées' in stats_tip.columns:
+                total_heures += stats_tip['Total_Heures_Travaillées'].sum()
         
-        # Ajouter la moyenne pondérée si possible
-        if total_employes > 0:
-            moyenne_ponderee_heures = total_heures_ponderees / total_employes
-            moyenne_ponderee_jours = moyenne_ponderee_heures / 8
-            lines.extend([
-                "",
-                f"📊 Moyenne pondérée des équipes : {moyenne_ponderee_heures:.1f}h ({moyenne_ponderee_jours:.1f} jours)"
-            ])
-            
-            # Ajouter des statistiques globales sur les arrêts maladie par agence
-            if 'Moy_Nb_Périodes_Arrêts' in moyennes_equipe.columns:
-                moy_periodes = moyennes_equipe['Moy_Nb_Périodes_Arrêts'].mean()
-                lines.append(f"📊 Moyenne des périodes d'arrêt par agence : {moy_periodes:.1f} périodes")
-                
-            if 'Moy_Moy_Heures_Par_Arrêt_Maladie' in moyennes_equipe.columns:
-                moy_heures_arret = moyennes_equipe['Moy_Moy_Heures_Par_Arrêt_Maladie'].mean()
-                lines.append(f"📊 Moyenne des heures par arrêt maladie par agence : {moy_heures_arret:.1f}h")
-                
-            # Ajouter la moyenne des heures supplémentaires si disponible
-            if 'Moy_Heures_Supp' in moyennes_equipe.columns:
-                moy_heures_supp = moyennes_equipe['Moy_Heures_Supp'].mean()
-                lines.append(f"📊 Moyenne des heures supplémentaires par équipe : {moy_heures_supp:.1f}h")
+        if stats_3x8 is not None:
+            nb_employes_3x8 = len(stats_3x8)
+            total_employes += nb_employes_3x8
+            # Pour 3x8, les heures sont calculées différemment si disponibles
+            if 'Total_Heures_Travaillées' in stats_3x8.columns:
+                total_heures += stats_3x8['Total_Heures_Travaillées'].sum()
         
-            # Ajouter les statistiques par agence
-            if agences_stats:
-                lines.append("")
-                lines.append("📊 HEURES SUPPLÉMENTAIRES PAR AGENCE")
-                for agence, stats in agences_stats.items():
-                    if stats['total_employes'] > 0:
-                        moy_heures_supp_agence = stats['total_heures_supp'] / stats['total_employes']
-                        lines.append(f"• {agence} : {moy_heures_supp_agence:.1f}h en moyenne ({stats['total_employes']} employés)")
-        
-        lines.append("")
-        
-        for line in lines:
-            self.log_manager.log_message(line)
-        return lines
+        self.structured_logger.log(f"Total employés toutes catégories: {total_employes}", "Global")
+        self.structured_logger.log(f"Total heures travaillées: {total_heures:.1f}h", "Global")
     
-    def _display_tip_section(self, stats_tip, moyennes_tip, heures_col):
-        """Affiche la section TIP (équipes hors astreinte)."""
-        lines = [
-            "🔧 ÉQUIPES TIP (HORS ASTREINTE ET SANS EMPLOYÉS 3x8)",
-            "",
-            f"• Nombre d'employés TIP (sans employés 3x8) : {len(stats_tip)}",
-            f"• Nombre d'équipes TIP : {len(moyennes_tip)}",
-            f"• Moyenne d'heures travaillées TIP : {stats_tip['Total_Heures_Travaillées'].mean():.1f}h",
-            f"• Taux de présence moyen TIP : {stats_tip['Présence_%_365j'].mean():.1f}%"
-        ]
-        
-        # Ajouter les statistiques d'arrêts maladie et heures supplémentaires si disponibles
-        if 'Nb_Périodes_Arrêts' in stats_tip.columns:
-            lines.append(f"• Moyenne périodes d'arrêt TIP : {stats_tip['Nb_Périodes_Arrêts'].mean():.1f} périodes")
-        
-        if 'Moy_Heures_Par_Arrêt_Maladie' in stats_tip.columns:
-            lines.append(f"• Moyenne heures par arrêt maladie TIP : {stats_tip['Moy_Heures_Par_Arrêt_Maladie'].mean():.1f}h")
-        
-        # Ajouter les statistiques d'heures supplémentaires si disponibles
-        if 'Heures_Supp' in stats_tip.columns:
-            lines.append(f"• Moyenne heures supplémentaires TIP : {stats_tip['Heures_Supp'].mean():.1f}h")
-        
-        # Calculer la moyenne pondérée des heures travaillées des équipes TIP
-        if heures_col and not moyennes_tip.empty:
-            total_heures_tip = 0
-            total_employes_tip = 0
-            
-            # Variables pour les heures supplémentaires par agence TIP
-            agences_tip_stats = {}
-            
-            for _, equipe in moyennes_tip.iterrows():
-                nb_emp = equipe.get('Nb_Employés', 0)
-                heures_moy = equipe.get(heures_col, 0)
-                if nb_emp > 0 and heures_moy > 0:
-                    total_heures_tip += heures_moy * nb_emp
-                    total_employes_tip += nb_emp
-                
-                # Collecte des statistiques par agence (premier mot du nom d'équipe)
-                if nb_emp > 0:
-                    agence = equipe['Équipe'].split()[0]
-                    if agence not in agences_tip_stats:
-                        agences_tip_stats[agence] = {
-                            'total_heures_supp': 0,
-                            'total_employes': 0
-                        }
-                    
-                    heures_supp = equipe.get('Moy_Heures_Supp', 0)
-                    agences_tip_stats[agence]['total_heures_supp'] += heures_supp * nb_emp
-                    agences_tip_stats[agence]['total_employes'] += nb_emp
-            
-            if total_employes_tip > 0:
-                moyenne_ponderee_heures_tip = total_heures_tip / total_employes_tip
-                moyenne_ponderee_jours_tip = moyenne_ponderee_heures_tip / 8
-                lines.extend([
-                    "",
-                    "🏢 MOYENNE DES ÉQUIPES TIP",
-                    f"• Moyenne pondérée d'heures travaillées : {moyenne_ponderee_heures_tip:.1f}h ({moyenne_ponderee_jours_tip:.1f} jours)"
-                ])
-                
-                # Ajouter la moyenne des heures supplémentaires si disponible
-                if 'Moy_Heures_Supp' in moyennes_tip.columns:
-                    moy_heures_supp_tip = moyennes_tip['Moy_Heures_Supp'].mean()
-                    lines.append(f"• Moyenne des heures supplémentaires par équipe TIP : {moy_heures_supp_tip:.1f}h")
-                
-                # Ajouter les statistiques par agence TIP
-                if agences_tip_stats:
-                    lines.append("")
-                    lines.append("📊 HEURES SUPPLÉMENTAIRES PAR AGENCE TIP")
-                    for agence, stats in agences_tip_stats.items():
-                        if stats['total_employes'] > 0:
-                            moy_heures_supp_agence = stats['total_heures_supp'] / stats['total_employes']
-                            lines.append(f"• {agence} : {moy_heures_supp_agence:.1f}h en moyenne ({stats['total_employes']} employés)")
-        
-        lines.extend([
-            "",
-            "📋 RÉPARTITION PAR ÉQUIPE TIP"
-        ])
-        
-        # Variables pour calculer la moyenne pondérée TIP
-        total_heures_ponderees_tip = 0
-        total_employes_tip = 0
-        
-        # Répartition par équipe TIP
-        for _, team in moyennes_tip.iterrows():
-            nb_emp = team.get('Nb_Employés', 'N/A')
-            if heures_col:
-                heures_moy = team[heures_col]
-                jours_moy = heures_moy / 8  # Conversion en jours
-                line = f"• {team['Équipe']} : {nb_emp} employés, {heures_moy:.1f}h moy. ({jours_moy:.1f} jours)"
-                
-                # Ajouter les informations d'arrêts maladie si disponibles
-                if 'Moy_Nb_Périodes_Arrêts' in team:
-                    line += f", {team['Moy_Nb_Périodes_Arrêts']:.1f} périodes d'arrêt"
-                
-                if 'Moy_Moy_Heures_Par_Arrêt_Maladie' in team:
-                    line += f", {team['Moy_Moy_Heures_Par_Arrêt_Maladie']:.1f}h/arrêt"
-                
-                # Ajouter les heures supplémentaires si disponibles
-                if 'Moy_Heures_Supp' in team:
-                    line += f", {team['Moy_Heures_Supp']:.1f}h supp."
-                
-                lines.append(line)
-                
-                # Calcul pour la moyenne pondérée TIP
-                if isinstance(nb_emp, (int, float)) and nb_emp > 0:
-                    total_heures_ponderees_tip += heures_moy * nb_emp
-                    total_employes_tip += nb_emp
-            else:
-                lines.append(f"• {team['Équipe']} : {nb_emp} employés")
-        
-        # Ajouter la moyenne pondérée TIP si possible
-        if total_employes_tip > 0:
-            moyenne_ponderee_heures_tip = total_heures_ponderees_tip / total_employes_tip
-            moyenne_ponderee_jours_tip = moyenne_ponderee_heures_tip / 8
-            lines.append(f"📊 Moyenne pondérée des équipes TIP : {moyenne_ponderee_heures_tip:.1f}h ({moyenne_ponderee_jours_tip:.1f} jours)")
-            
-            # Ajouter des statistiques globales sur les arrêts maladie par agence TIP
-            if 'Moy_Nb_Périodes_Arrêts' in moyennes_tip.columns:
-                moy_periodes = moyennes_tip['Moy_Nb_Périodes_Arrêts'].mean()
-                lines.append(f"📊 Moyenne des périodes d'arrêt par agence TIP : {moy_periodes:.1f} périodes")
-                
-            if 'Moy_Moy_Heures_Par_Arrêt_Maladie' in moyennes_tip.columns:
-                moy_heures_arret = moyennes_tip['Moy_Moy_Heures_Par_Arrêt_Maladie'].mean()
-                lines.append(f"📊 Moyenne des heures par arrêt maladie par agence TIP : {moy_heures_arret:.1f}h")
-        
-        lines.append("")
-        
-        for line in lines:
-            self.log_manager.log_message(line)
-        return lines
-    
-    def _display_3x8_section(self, stats_3x8, moyennes_3x8, heures_col):
-        """Affiche la section 3x8."""
-        lines = [
-            "🔄 ÉQUIPES EN 3x8",
-            "",
-            f"• Nombre d'employés en 3x8 : {len(stats_3x8)}",
-            f"• Nombre d'équipes en 3x8 : {len(moyennes_3x8)}",
-            "",
-            "📅 STATISTIQUES DE PRÉSENCE 3x8",
-            f"• Total jours travaillés : {stats_3x8['Jours_Travaillés'].sum():.1f}",
-            f"• Total jours d'absence partielle : {stats_3x8['Jours_Absents_Partiels'].sum():.1f}",
-            f"• Total jours d'absence : {stats_3x8['Total_Jours_Absents'].sum():.1f}",
-            f"• Moyenne jours travaillés par employé : {stats_3x8['Jours_Travaillés'].mean():.1f}",
-            f"• Moyenne jours d'absence partielle par employé : {stats_3x8['Jours_Absents_Partiels'].mean():.1f}",
-            f"• Moyenne jours d'absence totale par employé : {stats_3x8['Total_Jours_Absents'].mean():.1f}",
-            "",
-            "⏰ RÉPARTITION DES POSTES 3x8",
-            f"• Total postes du matin (7h30-15h30) : {stats_3x8['Postes_Matin'].sum()}",
-            f"• Total postes d'après-midi (15h30-23h30) : {stats_3x8['Postes_Apres_Midi'].sum()}",
-            f"• Total postes de nuit (23h30-7h30) : {stats_3x8['Postes_Nuit'].sum()}",
-            f"• Moyenne postes du matin par employé : {stats_3x8['Postes_Matin'].mean():.1f}",
-            f"• Moyenne postes d'après-midi par employé : {stats_3x8['Postes_Apres_Midi'].mean():.1f}",
-            f"• Moyenne postes de nuit par employé : {stats_3x8['Postes_Nuit'].mean():.1f}"
-        ]
-        
-        # Ajouter les statistiques d'arrêts maladie et heures supplémentaires si disponibles
-        if 'Nb_Périodes_Arrêts' in stats_3x8.columns:
-            lines.append(f"• Moyenne périodes d'arrêt 3x8 : {stats_3x8['Nb_Périodes_Arrêts'].mean():.1f} périodes")
-        
-        if 'Moy_Heures_Par_Arrêt_Maladie' in stats_3x8.columns:
-            lines.append(f"• Moyenne heures par arrêt maladie 3x8 : {stats_3x8['Moy_Heures_Par_Arrêt_Maladie'].mean():.1f}h")
-        
-        # Ajouter les statistiques d'heures supplémentaires si disponibles
-        if 'Heures_Supp' in stats_3x8.columns:
-            lines.append(f"• Moyenne heures supplémentaires 3x8 : {stats_3x8['Heures_Supp'].mean():.1f}h")
-        
-        if 'Total_Heures_Supp_Service_Continu' in stats_3x8.columns:
-            lines.append(f"• Moyenne heures supp. service continu : {stats_3x8['Total_Heures_Supp_Service_Continu'].mean():.1f}h")
-        
-        lines.append("")
-        lines.append("📋 RÉPARTITION PAR ÉQUIPE 3x8")
-        
-        # Variables pour calculer la moyenne pondérée 3x8
-        total_jours_ponderees_3x8 = 0
-        total_employes_3x8 = 0
-        
-        # Variables pour les heures supplémentaires par agence 3x8
-        agences_3x8_stats = {}
-        
-        # Répartition par équipe 3x8
-        for _, team in moyennes_3x8.iterrows():
-            nb_emp = team.get('Nb_Employés', 'N/A')
-            moy_jours = team.get('Moy_Jours_Travaillés', 0)
-            moy_absents_partiels = team.get('Moy_Jours_Absents_Partiels', 0)
-            
-            # Calcul pour la moyenne pondérée 3x8
-            if isinstance(nb_emp, (int, float)) and nb_emp > 0 and moy_jours > 0:
-                total_jours_ponderees_3x8 += moy_jours * nb_emp
-                total_employes_3x8 += nb_emp
-            
-            # Collecte des statistiques par agence (premier mot du nom d'équipe)
-            if isinstance(nb_emp, (int, float)) and nb_emp > 0:
-                agence = team['Équipe'].split()[0]
-                if agence not in agences_3x8_stats:
-                    agences_3x8_stats[agence] = {
-                        'total_heures_supp': 0,
-                        'total_employes': 0
-                    }
-                
-                heures_supp = team.get('Moy_Heures_Supp', 0)
-                agences_3x8_stats[agence]['total_heures_supp'] += heures_supp * nb_emp
-                agences_3x8_stats[agence]['total_employes'] += nb_emp
-            
-            # Vérifier si nous avons les totaux ou les moyennes des postes
-            if 'Total_Postes_Matin' in team:
-                matin = team.get('Total_Postes_Matin', 0)
-                apres_midi = team.get('Total_Postes_Apres_Midi', 0) 
-                nuit = team.get('Total_Postes_Nuit', 0)
-                line = (
-                    f"• {team['Équipe']} : {nb_emp} employés, {moy_jours:.1f} jours travaillés, "
-                    f"Absences: {moy_absents_partiels:.1f} partiels - "
-                    f"Total postes: Matin: {matin}, Après-midi: {apres_midi}, Nuit: {nuit}"
+    def _add_top_employees(self, stats_final, stats_tip, stats_3x8):
+        """Ajoute les meilleurs employés de chaque catégorie"""
+        # TOP employés astreinte
+        if stats_final is not None and not stats_final.empty:
+            top_employes = stats_final.nlargest(5, 'Total_Heures_Travaillées')
+            for i, (_, emp) in enumerate(top_employes.iterrows(), 1):
+                self.structured_logger.log(
+                    f"TOP {i}: {emp['Prénom']} {emp['Nom']} ({emp['Équipe']}) : {emp['Total_Heures_Travaillées']:.1f}h",
+                    "Employés", "ASTREINTE"
                 )
-            else:
-                matin = team.get('Moy_Postes_Matin', 0)
-                apres_midi = team.get('Moy_Postes_Apres_Midi', 0) 
-                nuit = team.get('Moy_Postes_Nuit', 0)
-                line = (
-                    f"• {team['Équipe']} : {nb_emp} employés, {moy_jours:.1f} jours travaillés, "
-                    f"Absences: {moy_absents_partiels:.1f} partiels - "
-                    f"Moyenne postes: Matin: {matin:.1f}, Après-midi: {apres_midi:.1f}, Nuit: {nuit:.1f}"
-                )
-            
-            # Ajouter les informations d'arrêts maladie si disponibles
-            if 'Moy_Nb_Périodes_Arrêts' in team:
-                line += f", {team['Moy_Nb_Périodes_Arrêts']:.1f} périodes d'arrêt"
-            
-            if 'Moy_Moy_Heures_Par_Arrêt_Maladie' in team:
-                line += f", {team['Moy_Moy_Heures_Par_Arrêt_Maladie']:.1f}h/arrêt"
-            
-            # Ajouter les heures supplémentaires si disponibles
-            if 'Moy_Heures_Supp' in team:
-                line += f", {team['Moy_Heures_Supp']:.1f}h supp."
-            
-            lines.append(line)
         
-        # Ajouter la moyenne pondérée 3x8 si possible
-        if total_employes_3x8 > 0:
-            moyenne_ponderee_jours_3x8 = total_jours_ponderees_3x8 / total_employes_3x8
-            lines.append(f"📊 Moyenne pondérée des équipes 3x8 : {moyenne_ponderee_jours_3x8:.1f} jours travaillés")
-            
-            # Ajouter des statistiques globales sur les arrêts maladie par agence 3x8
-            if 'Moy_Nb_Périodes_Arrêts' in moyennes_3x8.columns:
-                moy_periodes = moyennes_3x8['Moy_Nb_Périodes_Arrêts'].mean()
-                lines.append(f"📊 Moyenne des périodes d'arrêt par agence 3x8 : {moy_periodes:.1f} périodes")
-                
-            if 'Moy_Moy_Heures_Par_Arrêt_Maladie' in moyennes_3x8.columns:
-                moy_heures_arret = moyennes_3x8['Moy_Moy_Heures_Par_Arrêt_Maladie'].mean()
-                lines.append(f"📊 Moyenne des heures par arrêt maladie par agence 3x8 : {moy_heures_arret:.1f}h")
-            
-            # Ajouter la moyenne des heures supplémentaires si disponible
-            if 'Moy_Heures_Supp' in moyennes_3x8.columns:
-                moy_heures_supp_3x8 = moyennes_3x8['Moy_Heures_Supp'].mean()
-                lines.append(f"📊 Moyenne des heures supplémentaires par équipe 3x8 : {moy_heures_supp_3x8:.1f}h")
-            
-            # Ajouter les statistiques par agence 3x8
-            if agences_3x8_stats:
-                lines.append("")
-                lines.append("📊 HEURES SUPPLÉMENTAIRES PAR AGENCE 3x8")
-                for agence, stats in agences_3x8_stats.items():
-                    if stats['total_employes'] > 0:
-                        moy_heures_supp_agence = stats['total_heures_supp'] / stats['total_employes']
-                        lines.append(f"• {agence} : {moy_heures_supp_agence:.1f}h en moyenne ({stats['total_employes']} employés)")
-        
-        lines.append("")
-        
-        for line in lines:
-            self.log_manager.log_message(line)
-        return lines
-    
-    def _display_all_tops(self, top_employes, stats_tip, stats_3x8):
-        """Affiche tous les TOP à la fin."""
-        lines = [
-            "",
-            "🏆 TOP 5 EMPLOYÉS ASTREINTE (par heures travaillées)"
-        ]
-        
-        # TOP 5 employés astreinte
-        for i, (_, emp) in enumerate(top_employes.iterrows(), 1):
-            lines.append(f"{i}. {emp['Prénom']} {emp['Nom']} ({emp['Équipe']}) : {emp['Total_Heures_Travaillées']:.1f}h")
-        
-        # TOP 3 employés TIP si disponibles
+        # TOP employés TIP
         if stats_tip is not None and not stats_tip.empty:
-            lines.extend([
-                "",
-                "🏆 TOP 3 EMPLOYÉS TIP (par heures travaillées)"
-            ])
             top_employes_tip = stats_tip.nlargest(3, 'Total_Heures_Travaillées')
             for i, (_, emp) in enumerate(top_employes_tip.iterrows(), 1):
-                lines.append(f"{i}. {emp['Prénom']} {emp['Nom']} ({emp['Équipe']}) : {emp['Total_Heures_Travaillées']:.1f}h")
-        
-        # TOP employés 3x8 si disponibles
-        if stats_3x8 is not None and not stats_3x8.empty:
-            lines.extend([
-                "",
-                "🏆 TOP EMPLOYÉS 3x8 (par jours travaillés)"
-            ])
-            top_employes_3x8 = stats_3x8.nlargest(min(3, len(stats_3x8)), 'Jours_Travaillés')
-            for i, (_, emp) in enumerate(top_employes_3x8.iterrows(), 1):
-                lines.append(
-                    f"{i}. {emp['Prénom']} {emp['Nom']} ({emp['Équipe']}) : {emp['Jours_Travaillés']:.1f} jours travaillés, "
-                    f"Absences: {emp['Jours_Absents_Partiels']:.1f} partiels - "
-                    f"Postes: Matin: {emp['Postes_Matin']}, Après-midi: {emp['Postes_Apres_Midi']}, Nuit: {emp['Postes_Nuit']}"
+                self.structured_logger.log(
+                    f"TOP {i}: {emp['Prénom']} {emp['Nom']} ({emp['Équipe']}) : {emp['Total_Heures_Travaillées']:.1f}h",
+                    "Employés", "TIP"
                 )
         
-        lines.extend([
-            "",
-            "="*60
-        ])
-        
-        for line in lines:
-            self.log_manager.log_message(line)
-        return lines 
+        # TOP employés 3x8
+        if stats_3x8 is not None and not stats_3x8.empty:
+            top_employes_3x8 = stats_3x8.nlargest(min(3, len(stats_3x8)), 'Jours_Travaillés')
+            for i, (_, emp) in enumerate(top_employes_3x8.iterrows(), 1):
+                self.structured_logger.log(
+                    f"TOP {i}: {emp['Prénom']} {emp['Nom']} ({emp['Équipe']}) : {emp['Jours_Travaillés']:.1f} jours",
+                    "Employés", "3x8"
+                ) 
