@@ -17,22 +17,44 @@ def formater_donnees_finales(stats_employes):
     Returns:
         pd.DataFrame: DataFrame formaté avec les bonnes colonnes
     """
-    # Formatage du DataFrame final avec UNIQUEMENT les colonnes demandées
-    stats_final = stats_employes[['Nom', 'Prénom', 'Equipe (Lib.)', 
-                                 'Nb_Jours_Presents', 'Nb_Jours_Partiels', 'Total_Jours_Travailles',
-                                 'Total_Heures_Travaillees', 'Nb_Jours_Complets', 
-                                 'Nb_Jours_Absents', 'Total_Heures_Absence', 
-                                 'Presence_Pourcentage_365j']].copy()
+    # Colonnes de base toujours présentes
+    colonnes_base = ['Nom', 'Prénom', 'Equipe (Lib.)', 
+                     'Nb_Jours_Presents', 'Nb_Jours_Partiels', 'Total_Jours_Travailles',
+                     'Total_Heures_Travaillees', 'Nb_Jours_Complets', 
+                     'Nb_Jours_Absents', 'Total_Heures_Absence', 
+                     'Presence_Pourcentage_365j']
     
-    # Calculer la moyenne d'heures de présence par jour OÙ L'EMPLOYÉ ÉTAIT PRÉSENT
-    # (Total heures travaillées / (Jours présents + Jours partiels))
-    stats_final['Moyenne_Heures_Par_Jour_Present'] = (
-        stats_final['Total_Heures_Travaillees'] / 
-        (stats_final['Nb_Jours_Presents'] + stats_final['Nb_Jours_Partiels']).replace(0, 1)
-    ).round(2)
+    # Nouvelles colonnes optionnelles (peuvent ne pas être présentes)
+    nouvelles_colonnes = [
+        'Heures_Supp',
+        'Nb_Périodes_Arrêts', 'Nb_Jours_Arrêts_41', 'Nb_Jours_Arrêts_5H',
+        'Moy_Heures_Par_Arrêt_Maladie'
+    ]
     
-    # Renommage des colonnes selon les spécifications
-    stats_final.columns = COLONNES_FINALES
+    # Sélectionner les colonnes disponibles
+    colonnes_a_garder = colonnes_base.copy()
+    for col in nouvelles_colonnes:
+        if col in stats_employes.columns:
+            colonnes_a_garder.append(col)
+    
+    # Formatage du DataFrame final avec les colonnes disponibles
+    stats_final = stats_employes[colonnes_a_garder].copy()
+    
+    # Créer le mapping de renommage dynamique
+    mapping_renommage = {
+        'Equipe (Lib.)': 'Équipe',
+        'Nb_Jours_Presents': 'Jours_Présents_Complets',
+        'Nb_Jours_Partiels': 'Jours_Partiels',
+        'Total_Jours_Travailles': 'Total_Jours_Travaillés',
+        'Total_Heures_Travaillees': 'Total_Heures_Travaillées',
+        'Nb_Jours_Complets': 'Jours_Complets',
+        'Nb_Jours_Absents': 'Jours_Absents',
+        'Total_Heures_Absence': 'Total_Heures_Absence',
+        'Presence_Pourcentage_365j': 'Présence_%_365j'
+    }
+    
+    # Renommer les colonnes
+    stats_final = stats_final.rename(columns=mapping_renommage)
     
     return stats_final
 

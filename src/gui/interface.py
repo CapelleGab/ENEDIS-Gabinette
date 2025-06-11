@@ -26,6 +26,7 @@ class PMTAnalyticsInterface:
         self.moyennes_tip = None
         self.stats_3x8 = None
         self.moyennes_3x8 = None
+        self.arrets_maladie_tous = None
         self.summary_content = None  # Pour stocker le contenu du résumé
         
         # Initialiser les gestionnaires
@@ -201,7 +202,7 @@ class PMTAnalyticsInterface:
         thread.daemon = True
         thread.start()
     
-    def on_success(self, stats_final, moyennes_equipe, stats_tip=None, moyennes_tip=None, stats_3x8=None, moyennes_3x8=None):
+    def on_success(self, stats_final, moyennes_equipe, stats_tip=None, moyennes_tip=None, stats_3x8=None, moyennes_3x8=None, arrets_maladie_tous=None):
         """Appelé quand le traitement se termine avec succès."""
         self.stats_final = stats_final
         self.moyennes_equipe = moyennes_equipe
@@ -209,6 +210,7 @@ class PMTAnalyticsInterface:
         self.moyennes_tip = moyennes_tip
         self.stats_3x8 = stats_3x8
         self.moyennes_3x8 = moyennes_3x8
+        self.arrets_maladie_tous = arrets_maladie_tous
         self.root.after(0, self._on_success_ui)
     
     def _on_success_ui(self):
@@ -259,9 +261,18 @@ class PMTAnalyticsInterface:
             self.stats_tip,
             self.moyennes_tip,
             self.stats_3x8,
-            self.moyennes_3x8
+            self.moyennes_3x8,
+            self.arrets_maladie_tous
         )
 
     def export_summary(self):
-        """Exporte le résumé vers un fichier."""
-        self.export_manager.export_summary(self.summary_content) 
+        """Exporte le résumé vers un fichier texte."""
+        self.export_manager.export_summary(
+            self.stats_final,
+            self.moyennes_equipe,
+            self.stats_tip,
+            self.moyennes_tip,
+            self.stats_3x8,
+            self.moyennes_3x8,
+            self.arrets_maladie_tous
+        ) 

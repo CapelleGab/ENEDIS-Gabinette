@@ -67,7 +67,12 @@ COLONNES_FINALES = [
     'Nom', 'Prénom', 'Équipe', 'Jours_Présents_Complets', 
     'Jours_Partiels', 'Total_Jours_Travaillés', 'Total_Heures_Travaillées', 
     'Jours_Complets', 'Jours_Absents', 'Total_Heures_Absence', 
-    'Présence_%_365j', 'Moyenne_Heures_Par_Jour_Présent'
+    'Présence_%_365j',
+    # Nouvelle colonne pour heures supplémentaires hors astreinte
+    'Heures_Supp',
+    # Nouvelles colonnes pour arrêts maladie (simplifiées)
+    'Nb_Périodes_Arrêts', 'Nb_Jours_Arrêts_41', 'Nb_Jours_Arrêts_5H',
+    'Moy_Heures_Par_Arrêt_Maladie'
 ]
 
 NOMS_FEUILLES = {
@@ -76,5 +81,6 @@ NOMS_FEUILLES = {
     'tip_statistiques': 'TIP_STATS',
     'tip_moyennes': 'TIP_EQUIPES_MOYENNES',
     '3x8_statistiques': '3x8_STATS',
-    '3x8_moyennes': '3x8_EQUIPES_MOYENNES'
+    '3x8_moyennes': '3x8_EQUIPES_MOYENNES',
+    'arrets_maladie': 'AUTRES'
 } 

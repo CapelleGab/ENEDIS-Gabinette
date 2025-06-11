@@ -133,12 +133,6 @@ def calculer_statistiques_employes(df_filtre):
     # Calculer le pourcentage de présence sur 365 jours (basé sur les jours complets)
     stats['Presence_Pourcentage_365j'] = (stats['Nb_Jours_Presents'] / 365 * 100).round(2)
     
-    # Calculer la moyenne d'heures par jour présent (jours complets + partiels)
-    stats['Moyenne_Heures_Par_Jour'] = (
-        stats['Total_Heures_Travaillees'] / 
-        (stats['Nb_Jours_Presents'] + stats['Nb_Jours_Partiels']).replace(0, 1)
-    ).round(2)
-    
     # Arrondir Total_Jours_Travailles au centième près (2 décimales)
     stats['Total_Jours_Travailles'] = stats['Total_Jours_Travailles'].round(2)
     
@@ -164,8 +158,7 @@ def calculer_moyennes_equipe(df_stats):
         Moy_Jours_Complets=('Jours_Complets', 'mean'),
         Moy_Jours_Absents=('Jours_Absents', 'mean'),
         Moy_Heures_Absence=('Total_Heures_Absence', 'mean'),
-        Moy_Présence_365j=('Présence_%_365j', 'mean'),
-        Moy_Heures_Par_Jour_Présent=('Moyenne_Heures_Par_Jour_Présent', 'mean')
+        Moy_Présence_365j=('Présence_%_365j', 'mean')
     ).reset_index()
     
     # Arrondir toutes les colonnes à 2 décimales
