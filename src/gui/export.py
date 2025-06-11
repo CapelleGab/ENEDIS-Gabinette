@@ -151,15 +151,45 @@ class ExportManager:
         # Générer les statistiques pour chaque catégorie
         if stats_final is not None:
             self.structured_logger.log_employee_stats(stats_final, "ASTREINTE")
+            
+            # Générer les statistiques par DR pour ASTREINTE
+            if "UM (Lib)" in stats_final.columns:
+                self.log_manager.log_message(f"✅ Colonne 'UM (Lib)' trouvée dans les données ASTREINTE")
+                self.structured_logger.log_dr_stats(stats_final, "ASTREINTE")
+            else:
+                self.log_manager.log_message(f"⚠️ Colonne 'UM (Lib)' non trouvée dans les données ASTREINTE")
+                # Afficher les colonnes disponibles pour diagnostic
+                self.log_manager.log_message(f"📊 Colonnes disponibles: {', '.join(stats_final.columns)}")
         
         if stats_tip is not None:
             self.structured_logger.log_employee_stats(stats_tip, "TIP")
+            
+            # Générer les statistiques par DR pour TIP
+            if "UM (Lib)" in stats_tip.columns:
+                self.log_manager.log_message(f"✅ Colonne 'UM (Lib)' trouvée dans les données TIP")
+                self.structured_logger.log_dr_stats(stats_tip, "TIP")
+            else:
+                self.log_manager.log_message(f"⚠️ Colonne 'UM (Lib)' non trouvée dans les données TIP")
         
         if stats_3x8 is not None:
             self.structured_logger.log_employee_stats(stats_3x8, "3x8")
+            
+            # Générer les statistiques par DR pour 3x8
+            if "UM (Lib)" in stats_3x8.columns:
+                self.log_manager.log_message(f"✅ Colonne 'UM (Lib)' trouvée dans les données 3x8")
+                self.structured_logger.log_dr_stats(stats_3x8, "3x8")
+            else:
+                self.log_manager.log_message(f"⚠️ Colonne 'UM (Lib)' non trouvée dans les données 3x8")
         
         if arrets_maladie_tous is not None:
             self.structured_logger.log_employee_stats(arrets_maladie_tous, "Autres")
+            
+            # Générer les statistiques par DR pour Autres
+            if "UM (Lib)" in arrets_maladie_tous.columns:
+                self.log_manager.log_message(f"✅ Colonne 'UM (Lib)' trouvée dans les données Autres")
+                self.structured_logger.log_dr_stats(arrets_maladie_tous, "Autres")
+            else:
+                self.log_manager.log_message(f"⚠️ Colonne 'UM (Lib)' non trouvée dans les données Autres")
         
         # Générer les statistiques par agence si la colonne FSDUM est disponible
         # Note: on vérifie les 4 DataFrames car chacun pourrait contenir la colonne FSDUM
@@ -168,7 +198,7 @@ class ExportManager:
         
         for df in dfs_to_check:
             if "FSDUM (Lib)" in df.columns:
-                self.structured_logger.log_agency_stats(df)
+                pass  # La méthode log_agency_stats a été supprimée
         
         # Générer les statistiques globales
         if stats_final is not None:

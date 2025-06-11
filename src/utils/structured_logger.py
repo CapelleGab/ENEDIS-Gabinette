@@ -12,7 +12,7 @@ class StructuredLogger:
     """
     Gestionnaire de logs structurés qui organise les données par:
     - Type d'employé (ASTREINTE, TIP, 3x8, Autres)
-    - Agence (Batignole, Grenelle, Italy, Paris Est)
+    - DR (Direction Régionale: DR PARIS, DIR NATIONALE, etc.)
     - Global (Toutes agences confondues)
     """
     
@@ -31,12 +31,7 @@ class StructuredLogger:
                 "3x8": [],
                 "Autres": []
             },
-            "Agences": {
-                "Batignole": [],
-                "Grenelle": [],
-                "Italy": [],
-                "Paris Est": []
-            },
+            "DR": {},
             "Global": []
         }
     
@@ -46,13 +41,19 @@ class StructuredLogger:
         
         Args:
             message (str): Message à logger
-            category (str): Catégorie principale ("Employés", "Agences", "Global")
-            subcategory (str, optional): Sous-catégorie (ex: "ASTREINTE", "Batignole")
+            category (str): Catégorie principale ("Employés", "DR", "Global")
+            subcategory (str, optional): Sous-catégorie (ex: "ASTREINTE", "DR PARIS")
         """
         if category == "Global":
             self.logs["Global"].append(message)
-        elif category in self.logs and subcategory in self.logs[category]:
-            self.logs[category][subcategory].append(message)
+        elif category in self.logs:
+            if category == "DR":
+                # Pour les DR, créer la sous-catégorie si elle n'existe pas
+                if subcategory not in self.logs[category]:
+                    self.logs[category][subcategory] = []
+                self.logs[category][subcategory].append(message)
+            elif subcategory in self.logs[category]:
+                self.logs[category][subcategory].append(message)
         
         # Afficher également dans le log_manager si disponible
         if self.log_manager:
@@ -113,48 +114,69 @@ class StructuredLogger:
                     total_nuit = stats_df['Postes_Nuit'].sum()
                     self.log(f"Total postes nuit {category}: {total_nuit}", "Employés", category)
     
-    def log_agency_stats(self, stats_df, agency_column="FSDUM (Lib)"):
+    def log_dr_stats(self, stats_df, employee_type, dr_column="UM (Lib)"):
         """
-        Ajoute des statistiques par agence en filtrant par la colonne d'agence.
+        Ajoute des statistiques par Direction Régionale (DR) en filtrant par la colonne UM.
         
         Args:
             stats_df (pd.DataFrame): DataFrame de statistiques
-            agency_column (str): Nom de la colonne contenant l'agence
+            employee_type (str): Type d'employés ("ASTREINTE", "TIP", "3x8", "Autres")
+            dr_column (str): Nom de la colonne contenant la Direction Régionale
         """
-        if stats_df is None or stats_df.empty or agency_column not in stats_df.columns:
-            self.log(f"Aucune donnée d'agence disponible", "Global")
+        if stats_df is None or stats_df.empty:
+            self.log(f"Aucune donnée pour {employee_type}", "Global")
+            return
+            
+        if dr_column not in stats_df.columns:
+            self.log(f"Colonne '{dr_column}' non trouvée pour {employee_type}. Colonnes disponibles: {', '.join(stats_df.columns)}", "Global")
             return
         
-        # Pour chaque agence connue
-        for agency in ["Batignole", "Grenelle", "Italy", "Paris Est"]:
-            # Filtrer les données pour cette agence
-            agency_df = stats_df[stats_df[agency_column] == agency]
+        # Identifier toutes les DR présentes dans le DataFrame
+        drs = stats_df[dr_column].dropna().unique()
+        
+        if len(drs) == 0:
+            self.log(f"Aucune Direction Régionale trouvée pour {employee_type}", "Global")
+            return
             
-            if agency_df.empty:
-                self.log(f"Aucune donnée pour l'agence {agency}", "Agences", agency)
+        # Message de débogage
+        self.log(f"Directions Régionales trouvées pour {employee_type}: {len(drs)}", "Global")
+        
+        for dr in drs:
+            if pd.isna(dr) or dr == "":
+                continue
+                
+            # Filtrer les données pour cette DR
+            dr_df = stats_df[stats_df[dr_column] == dr]
+            
+            if dr_df.empty:
                 continue
             
             # Nombre d'employés
-            nb_employes = len(agency_df)
-            self.log(f"Nombre d'employés: {nb_employes}", "Agences", agency)
+            nb_employes = len(dr_df)
+            self.log(f"Nombre d'employés {employee_type}: {nb_employes}", "DR", dr)
             
             # Statistiques générales
-            if 'Total_Heures_Travaillées' in agency_df.columns:
-                moy_heures = agency_df['Total_Heures_Travaillées'].mean()
-                self.log(f"Moyenne d'heures travaillées: {moy_heures:.1f}h", "Agences", agency)
+            if 'Total_Heures_Travaillées' in dr_df.columns:
+                moy_heures = dr_df['Total_Heures_Travaillées'].mean()
+                self.log(f"Moyenne d'heures travaillées {employee_type}: {moy_heures:.1f}h", "DR", dr)
             
-            if 'Présence_%_365j' in agency_df.columns:
-                moy_presence = agency_df['Présence_%_365j'].mean()
-                self.log(f"Taux de présence moyen: {moy_presence:.1f}%", "Agences", agency)
+            if 'Présence_%_365j' in dr_df.columns:
+                moy_presence = dr_df['Présence_%_365j'].mean()
+                self.log(f"Taux de présence moyen {employee_type}: {moy_presence:.1f}%", "DR", dr)
             
-            if 'Heures_Supp' in agency_df.columns:
-                total_hs = agency_df['Heures_Supp'].sum()
-                moy_hs = agency_df['Heures_Supp'].mean() if nb_employes > 0 else 0
-                self.log(f"Total heures supplémentaires: {total_hs:.1f}h (moy: {moy_hs:.1f}h)", "Agences", agency)
+            if 'Heures_Supp' in dr_df.columns:
+                total_hs = dr_df['Heures_Supp'].sum()
+                moy_hs = dr_df['Heures_Supp'].mean() if nb_employes > 0 else 0
+                self.log(f"Total heures supplémentaires {employee_type}: {total_hs:.1f}h (moy: {moy_hs:.1f}h)", "DR", dr)
             
-            if 'Nb_Périodes_Arrêts' in agency_df.columns:
-                total_periodes = agency_df['Nb_Périodes_Arrêts'].sum()
-                self.log(f"Total périodes d'arrêts maladie: {total_periodes}", "Agences", agency)
+            if 'Nb_Périodes_Arrêts' in dr_df.columns:
+                total_periodes = dr_df['Nb_Périodes_Arrêts'].sum()
+                self.log(f"Total périodes d'arrêts maladie {employee_type}: {total_periodes}", "DR", dr)
+                
+            if 'Nb_Jours_Arrêts_41' in dr_df.columns and 'Nb_Jours_Arrêts_5H' in dr_df.columns:
+                total_jours_41 = dr_df['Nb_Jours_Arrêts_41'].sum()
+                total_jours_5h = dr_df['Nb_Jours_Arrêts_5H'].sum()
+                self.log(f"Total jours arrêts maladie {employee_type}: 41={total_jours_41}, 5H={total_jours_5h}", "DR", dr)
     
     def format_summary(self):
         """
@@ -188,20 +210,45 @@ class StructuredLogger:
                     summary.append(f"  - {log}")
                 summary.append("")
         
-        # Section Agences
+        # Section DR (Directions Régionales) complète
         summary.extend([
             "-"*80,
-            "AGENCES",
+            "DIRECTIONS RÉGIONALES - DÉTAILS",
             "-"*80,
             ""
         ])
         
-        for agency, logs in self.logs["Agences"].items():
-            if logs:
-                summary.append(f"• {agency}")
-                for log in logs:
-                    summary.append(f"  - {log}")
-                summary.append("")
+        # Vérifier si nous avons des données pour les DR
+        if not self.logs["DR"]:
+            self.log("Aucune donnée par Direction Régionale disponible", "Global")
+            summary.append("• Aucune donnée par Direction Régionale disponible")
+            summary.append("")
+        else:
+            # Parcourir les DR par ordre alphabétique
+            for dr in sorted(self.logs["DR"].keys()):
+                logs = self.logs["DR"].get(dr, [])
+                if logs:
+                    summary.append(f"• {dr}")
+                    
+                    # Filtrer pour afficher d'abord les statistiques ASTREINTE puis les autres
+                    astreinte_logs = []
+                    other_logs = []
+                    
+                    for log in logs:
+                        if "ASTREINTE" in log:
+                            astreinte_logs.append(log)
+                        else:
+                            other_logs.append(log)
+                    
+                    # Afficher d'abord les statistiques ASTREINTE
+                    for log in astreinte_logs:
+                        summary.append(f"  - {log}")
+                    
+                    # Puis les autres statistiques
+                    for log in other_logs:
+                        summary.append(f"  - {log}")
+                    
+                    summary.append("")
         
         # Section Global
         summary.extend([
@@ -286,4 +333,7 @@ class StructuredLogger:
                 self.logs[category] = []
             else:
                 for subcategory in self.logs[category]:
-                    self.logs[category][subcategory] = [] 
+                    self.logs[category][subcategory] = []
+                    
+        # Réinitialiser le dictionnaire DR qui peut contenir des clés dynamiques
+        self.logs["DR"] = {} 

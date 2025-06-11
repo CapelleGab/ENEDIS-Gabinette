@@ -253,6 +253,16 @@ class DataProcessor:
                 moy_heures_arret = stats_final['Moy_Heures_Par_Arrêt_Maladie'].mean()
                 self.log_manager.log_message(f"📊 Moyenne heures par jour d'arrêt: {moy_heures_arret:.1f}h")
             
+            # Statistiques par DR pour ASTREINTE
+            if "UM (Lib)" in stats_final.columns:
+                # Vérifier que la colonne contient des valeurs
+                dr_values = stats_final["UM (Lib)"].dropna().unique()
+                if len(dr_values) > 0:
+                    self.log_manager.log_message(f"✅ {len(dr_values)} Directions Régionales trouvées: {', '.join(dr_values[:3])}...")
+                    self.structured_logger.log_dr_stats(stats_final, "ASTREINTE")
+                else:
+                    self.log_manager.log_message("⚠️ Colonne 'UM (Lib)' trouvée mais vide")
+            
             self.log_manager.log_message("✅ Traitement terminé avec succès !")
             self.on_success(stats_final, moyennes_equipe, stats_final_tip, moyennes_equipe_tip, stats_final_3x8, moyennes_equipe_3x8, arrets_maladie_tous)
             
@@ -294,6 +304,16 @@ class SummaryDisplayer:
                             f"Équipe {team['Équipe']}: {team.get('Nb_Employés', 0)} employés, {heures_moy:.1f}h",
                             "Employés", "ASTREINTE"
                         )
+                        
+            # Statistiques par DR pour ASTREINTE
+            if "UM (Lib)" in stats_final.columns:
+                # Vérifier que la colonne contient des valeurs
+                dr_values = stats_final["UM (Lib)"].dropna().unique()
+                if len(dr_values) > 0:
+                    self.log_manager.log_message(f"✅ {len(dr_values)} Directions Régionales trouvées: {', '.join(dr_values[:3])}...")
+                    self.structured_logger.log_dr_stats(stats_final, "ASTREINTE")
+                else:
+                    self.log_manager.log_message("⚠️ Colonne 'UM (Lib)' trouvée mais vide")
         
         if stats_tip is not None:
             self.structured_logger.log_employee_stats(stats_tip, "TIP")
@@ -308,6 +328,10 @@ class SummaryDisplayer:
                             f"Équipe {team['Équipe']}: {team.get('Nb_Employés', 0)} employés, {heures_moy:.1f}h",
                             "Employés", "TIP"
                         )
+                        
+            # Statistiques par DR pour TIP
+            if "UM (Lib)" in stats_tip.columns:
+                self.structured_logger.log_dr_stats(stats_tip, "TIP")
         
         if stats_3x8 is not None:
             self.structured_logger.log_employee_stats(stats_3x8, "3x8")
@@ -320,12 +344,16 @@ class SummaryDisplayer:
                         f"Équipe {team['Équipe']}: {team.get('Nb_Employés', 0)} employés, {moy_jours:.1f} jours",
                         "Employés", "3x8"
                     )
+                    
+            # Statistiques par DR pour 3x8
+            if "UM (Lib)" in stats_3x8.columns:
+                self.structured_logger.log_dr_stats(stats_3x8, "3x8")
         
         # Génération des statistiques par agence
         dfs_to_check = [df for df in [stats_final, stats_tip, stats_3x8] if df is not None and not df.empty]
         for df in dfs_to_check:
             if "FSDUM (Lib)" in df.columns:
-                self.structured_logger.log_agency_stats(df)
+                pass  # La méthode log_agency_stats a été supprimée
         
         # Génération des statistiques globales
         self._add_global_stats(stats_final, stats_tip, stats_3x8)
