@@ -184,18 +184,13 @@ class ExportManager:
         if arrets_maladie_tous is not None:
             self.structured_logger.log_employee_stats(arrets_maladie_tous, "Autres")
 
-            # Générer les statistiques par DR pour Autres
-            if "UM (Lib)" in arrets_maladie_tous.columns:
-                self.log_manager.log_message(f"✅ Colonne 'UM (Lib)' trouvée dans les données Autres")
-                # Identifier spécifiquement la DR PARIS et mettre en évidence ses statistiques
-                dr_paris = arrets_maladie_tous[arrets_maladie_tous["UM (Lib)"] == "DR PARIS"]
-                if not dr_paris.empty:
-                    nb_employes_paris = len(dr_paris)
-                    self.log_manager.log_message(f"✅ DR PARIS: {nb_employes_paris} employés avec des arrêts maladie")
-
-                self.structured_logger.log_dr_stats(arrets_maladie_tous, "Autres")
+            # Les données Autres contiennent uniquement des employés DR PARIS (filtrage appliqué en amont)
+            nb_employes_paris = len(arrets_maladie_tous)
+            if nb_employes_paris > 0:
+                self.log_manager.log_message(f"✅ DR PARIS: {nb_employes_paris} employés dans la feuille AUTRES (arrêts maladie et heures supplémentaires)")
+                # Pas besoin de log_dr_stats car tous les employés sont DR PARIS
             else:
-                self.log_manager.log_message(f"⚠️ Colonne 'UM (Lib)' non trouvée dans les données Autres")
+                self.log_manager.log_message(f"⚠️ Aucun employé DR PARIS trouvé dans les données Autres")
 
         # Générer les statistiques par agence si la colonne FSDUM est disponible
         # Note: on vérifie les 4 DataFrames car chacun pourrait contenir la colonne FSDUM

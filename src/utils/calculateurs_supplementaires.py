@@ -680,6 +680,7 @@ def calculer_statistiques_arrets_maladie_tous_employes(df):
     """
     Calcule les statistiques d'arrêts maladie pour AUTRES (employés n'étant ni ASTREINTE, ni TIP, ni 3x8).
     Inclut également les heures supplémentaires pour ces employés.
+    FILTRE UNIQUEMENT LES EMPLOYÉS DR PARIS.
     """
     try:
         if df.empty:
@@ -697,8 +698,17 @@ def calculer_statistiques_arrets_maladie_tous_employes(df):
         gentiles_3x8 = df_3x8['Gentile'].unique() if not df_3x8.empty else []
         df_autres = df_autres[~df_autres['Gentile'].isin(gentiles_3x8)].copy()
 
+        # NOUVEAU: Filtrer uniquement les employés DR PARIS
+        if 'UM (Lib)' in df_autres.columns:
+            df_autres = df_autres[df_autres['UM (Lib)'] == 'DR PARIS'].copy()
+            print(f"✅ Filtrage DR PARIS appliqué: {len(df_autres)} lignes conservées")
+        else:
+            print("⚠️ Colonne 'UM (Lib)' non trouvée, impossible de filtrer DR PARIS")
+            return pd.DataFrame()
+
         # On continue le calcul sur df_autres
         if df_autres.empty:
+            print("⚠️ Aucun employé DR PARIS trouvé dans les données AUTRES")
             return pd.DataFrame()
         return _calculer_statistiques_arrets_maladie_tous_employes_core(df_autres)
     except Exception as e:
@@ -778,14 +788,10 @@ def _calculer_statistiques_arrets_maladie_tous_employes_core(df):
                 if not employe_hs.empty:
                     heures_supp = employe_hs.iloc[0]['Heures_Supp']
 
-            # NOUVEAU: Récupérer la Direction Régionale (UM (Lib))
-            dr = info_employe.get('UM (Lib)', '') if 'UM (Lib)' in info_employe else ''
-
             stats_par_employe.append({
                 'Nom': info_employe.get('Nom', 'Inconnu'),
                 'Prénom': info_employe.get('Prénom', 'Inconnu'),
                 'Équipe': info_employe.get('Equipe (Lib.)', 'Non spécifiée'),
-                'UM (Lib)': dr,  # NOUVEAU: Ajout de la colonne Direction Régionale
                 'Nb_Périodes_Arrêts': nb_periodes,
                 'Nb_Jours_Arrêts_41': nb_jours_41,
                 'Nb_Jours_Arrêts_5H': nb_jours_5h,
@@ -799,19 +805,10 @@ def _calculer_statistiques_arrets_maladie_tous_employes_core(df):
                 gentile = row[id_col]
                 # Vérifier si cet employé n'est pas déjà dans le DataFrame final
                 if not any(emp.get(id_col) == gentile for emp in stats_par_employe if id_col in emp):
-                    # NOUVEAU: Récupérer la Direction Régionale (UM (Lib)) pour les employés sans arrêts maladie
-                    dr = ''
-                    employe_rows = df[df[id_col] == gentile]
-                    if not employe_rows.empty and 'UM (Lib)' in employe_rows.columns:
-                        dr_values = employe_rows['UM (Lib)'].dropna().unique()
-                        if len(dr_values) > 0:
-                            dr = dr_values[0]
-
                     stats_par_employe.append({
                         'Nom': row['Nom'],
                         'Prénom': row['Prénom'],
                         'Équipe': row['Équipe'],
-                        'UM (Lib)': dr,  # NOUVEAU: Ajout de la colonne Direction Régionale
                         'Nb_Périodes_Arrêts': 0,
                         'Nb_Jours_Arrêts_41': 0,
                         'Nb_Jours_Arrêts_5H': 0,
