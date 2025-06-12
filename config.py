@@ -23,9 +23,9 @@ FICHIER_EXCEL = f'Statistiques_PMT_{ANNEE}.xlsx'
 # =============================================================================
 
 CODES_EQUIPES_ASTREINTE = [
-    'PV IT ASTREINTE', 
-    'PV B ASTREINTE', 
-    'PV G ASTREINTE', 
+    'PV IT ASTREINTE',
+    'PV B ASTREINTE',
+    'PV G ASTREINTE',
     'PV PE ASTREINTE'
 ]
 
@@ -64,9 +64,9 @@ CSV_SEPARATOR = ';'
 # =============================================================================
 
 COLONNES_FINALES = [
-    'Nom', 'Prénom', 'Équipe', 'Jours_Présents_Complets', 
-    'Jours_Partiels', 'Total_Jours_Travaillés', 'Total_Heures_Travaillées', 
-    'Jours_Complets', 'Jours_Absents', 'Total_Heures_Absence', 
+    'Nom', 'Prénom', 'Équipe', 'Jours_Présents_Complets',
+    'Jours_Partiels', 'Total_Jours_Travaillés', 'Total_Heures_Travaillées',
+    'Jours_Complets', 'Jours_Absents', 'Total_Heures_Absence',
     'Présence_%_365j',
     # Nouvelle colonne pour heures supplémentaires hors astreinte
     'Heures_Supp',
@@ -83,4 +83,4 @@ NOMS_FEUILLES = {
     '3x8_statistiques': '3x8_STATS',
     '3x8_moyennes': '3x8_EQUIPES_MOYENNES',
     'arrets_maladie': 'AUTRES'
-} 
+}
