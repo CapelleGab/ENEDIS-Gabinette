@@ -4,7 +4,7 @@ Module de filtrage des données PMT.
 author : CAPELLE Gabin
 """
 
-from config import JOURS_WEEKEND, HORAIRE_DEBUT_REFERENCE, HORAIRE_FIN_REFERENCE
+from config import JOURS_WEEKEND
 from .horaires import get_horaire_final, verifier_horaire_reference
 
 

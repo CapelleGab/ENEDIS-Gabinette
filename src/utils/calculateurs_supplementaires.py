@@ -7,7 +7,7 @@ author : CAPELLE Gabin
 """
 
 import pandas as pd
-from config import JOURS_WEEKEND, HORAIRE_DEBUT_REFERENCE, HORAIRE_FIN_REFERENCE
+from config import JOURS_WEEKEND
 from config import CODES_EQUIPES_ASTREINTE, CODES_EQUIPES_HORS_ASTREINTE
 from .data_loader import preparer_donnees_3x8
 
@@ -589,55 +589,6 @@ def _calculer_heures_supp_ligne(row):
     except (ValueError, TypeError, AttributeError, KeyError):
         # En cas d'erreur, retourner 0
         return 0.0
-
-
-def _calculer_heures_travaillees_ligne(row):
-    """
-    Calcule les heures travaillées pour une ligne (similaire au module calculateurs.py).
-
-    Args:
-        row: Ligne du DataFrame
-
-    Returns:
-        float: Nombre d'heures travaillées
-    """
-    try:
-        # Si on a un code (absence ou autre)
-        if pd.notna(row.get('Code', '')) and row.get('Code', '') not in ['', ' ']:
-            # Cas spécial : code "80TH" = 8 heures travaillées
-            if str(row.get('Code', '')).strip().upper() == '80TH':
-                return 8.0
-
-            # Si on a une valeur numérique avec le code
-            if pd.notna(row.get('Valeur', '')) and row.get('Valeur', '') != '':
-                valeur = float(row.get('Valeur', 0))
-                if valeur >= 0:
-                    # Vérifier l'unité dans la colonne "Dés. unité"
-                    unite = str(row.get('Dés. unité', '')).strip().lower() if pd.notna(row.get('Dés. unité', '')) else ''
-
-                    if 'jour' in unite:
-                        # Si l'unité est en jours : valeur = nombre de jours travaillés
-                        heures_travaillees = valeur * 8.0
-                        return min(8.0, heures_travaillees)  # Maximum 8 heures par jour
-                    elif 'heure' in unite:
-                        # Si l'unité est en heures : valeur = nombre d'heures travaillées
-                        return min(8.0, valeur)  # Maximum 8 heures par jour
-                    else:
-                        # Si pas d'unité : valeur = nombre d'heures d'absence (ancien comportement)
-                        heures_travaillees = 8.0 - valeur
-                    return max(0, heures_travaillees)  # Minimum 0 heures
-                else:
-                    return 8.0  # Valeur négative = journée complète
-            else:
-                # Code d'absence sans valeur = 8h d'absence = 0h travaillées
-                return 0.0
-        else:
-            # Pas de code = journée complète travaillée
-            return 8.0
-    except (ValueError, TypeError):
-        # Si conversion impossible, considérer comme journée complète
-        return 8.0
-
 
 def _calculer_heures_absence_ligne(row):
     """

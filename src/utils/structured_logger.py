@@ -7,7 +7,6 @@ author : CAPELLE Gabin
 
 import pandas as pd
 
-
 class StructuredLogger:
     """
     Gestionnaire de logs structurés qui organise les données par:

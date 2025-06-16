@@ -1,178 +1,250 @@
 """
 Module de calcul des statistiques PMT.
 
-author : CAPELLE Gabin
+Author: CAPELLE Gabin
+Version: 2.0.0
 """
 
 import pandas as pd
+import logging
+from typing import Optional
+from dataclasses import dataclass
+
+from .exceptions import CalculationError
+
+logger = logging.getLogger(__name__)
 
 
-def calculer_heures_travaillees(row):
-    """
-    Calcule les heures travaillées selon la logique corrigée :
-    - Si code "80TH" : 8 heures travaillées (journée complète)
-    - Si la valeur existe et est numérique :
-      * Si unité = "Heure(s)" : valeur = heures travaillées (ex: 6 heures travaillées)
-      * Si unité = "Jour(s)" : valeur * 8 = heures travaillées (ex: 1 jour = 8h travaillées)
-      * Si pas d'unité : 8 - valeur (comportement par défaut pour les absences)
-    - Si code d'absence sans valeur : 0 heures travaillées (8h d'absence)
-    - Si pas de code ou valeur invalide : 8 heures travaillées (journée complète)
+@dataclass
+class WorkHoursResult:
+    """Résultat du calcul des heures travaillées."""
+    hours_worked: float
+    is_full_day: bool
+    is_partial_day: bool
+    is_absent: bool
 
-    Args:
-        row: Ligne du DataFrame
 
-    Returns:
-        float: Nombre d'heures travaillées
-    """
-    try:
-        # Si on a un code (absence ou autre)
-        if pd.notna(row['Code']) and row['Code'] not in ['', ' ']:
-            # Cas spécial : code "80TH" = 8 heures travaillées
-            if str(row['Code']).strip().upper() == '80TH':
-                return 8.0
+class WorkHoursCalculator:
+    """Calculateur d'heures travaillées."""
 
-            # Si on a une valeur numérique avec le code
-            if pd.notna(row['Valeur']) and row['Valeur'] != '':
-                valeur = float(row['Valeur'])
-                if valeur >= 0:
-                    # Vérifier l'unité dans la colonne "Dés. unité"
-                    unite = str(row.get('Dés. unité', '')).strip().lower() if pd.notna(row.get('Dés. unité', '')) else ''
+    FULL_DAY_HOURS = 8.0
+    SPECIAL_CODES = {
+        '80TH': FULL_DAY_HOURS
+    }
 
-                    if 'jour' in unite:
-                        # Si l'unité est en jours : valeur = nombre de jours travaillés
-                        # Exemple: 1 jour travaillé = 8h travaillées
-                        heures_travaillees = valeur * 8.0
-                        return min(8.0, heures_travaillees)  # Maximum 8 heures par jour
-                    elif 'heure' in unite:
-                        # Si l'unité est en heures : valeur = nombre d'heures travaillées
-                        # Exemple: 6 heures travaillées
-                        return min(8.0, valeur)  # Maximum 8 heures par jour
-                    else:
-                        # Si pas d'unité : valeur = nombre d'heures d'absence (ancien comportement)
-                        # Exemple: 2 heures d'absence = 8-2 = 6h travaillées
-                        heures_travaillees = 8.0 - valeur
-                    return max(0, heures_travaillees)  # Minimum 0 heures
+    def calculate_hours_worked(self, row: pd.Series) -> WorkHoursResult:
+        """
+        Calcule les heures travaillées selon la logique métier.
+
+        Args:
+            row: Ligne du DataFrame
+
+        Returns:
+            WorkHoursResult avec les détails du calcul
+        """
+        try:
+            code = self._get_clean_code(row)
+            value = self._get_numeric_value(row)
+            unit = self._get_unit(row)
+
+            # Cas spéciaux par code
+            if code in self.SPECIAL_CODES:
+                hours = self.SPECIAL_CODES[code]
+                return WorkHoursResult(hours, True, False, False)
+
+            # Si on a un code d'absence
+            if code:
+                if value is not None and value >= 0:
+                    hours = self._calculate_hours_with_unit(value, unit)
+                    is_absent = hours == 0
+                    is_full = hours == self.FULL_DAY_HOURS
+                    is_partial = not is_absent and not is_full
+                    return WorkHoursResult(hours, is_full, is_partial, is_absent)
                 else:
-                    return 8.0  # Valeur négative = journée complète
-            else:
-                # Code d'absence sans valeur = 8h d'absence = 0h travaillées
-                return 0.0
+                    # Code sans valeur = absence complète
+                    return WorkHoursResult(0.0, False, False, True)
+
+            # Pas de code = journée complète
+            return WorkHoursResult(self.FULL_DAY_HOURS, True, False, False)
+
+        except Exception as e:
+            logger.warning(f"Erreur calcul heures travaillées: {e}, utilisation valeur par défaut")
+            return WorkHoursResult(self.FULL_DAY_HOURS, True, False, False)
+
+    def _get_clean_code(self, row: pd.Series) -> str:
+        """Extrait et nettoie le code de la ligne."""
+        code = row.get('Code', '')
+        if pd.notna(code) and str(code).strip():
+            return str(code).strip().upper()
+        return ''
+
+    def _get_numeric_value(self, row: pd.Series) -> Optional[float]:
+        """Extrait la valeur numérique de la ligne."""
+        value = row.get('Valeur')
+        if pd.notna(value) and value != '':
+            try:
+                return float(value)
+            except (ValueError, TypeError):
+                return None
+        return None
+
+    def _get_unit(self, row: pd.Series) -> str:
+        """Extrait l'unité de la ligne."""
+        unit = row.get('Dés. unité', '')
+        if pd.notna(unit):
+            return str(unit).strip().lower()
+        return ''
+
+    def _calculate_hours_with_unit(self, value: float, unit: str) -> float:
+        """Calcule les heures en fonction de la valeur et de l'unité."""
+        if 'jour' in unit:
+            # Valeur en jours travaillés
+            hours = value * self.FULL_DAY_HOURS
+            return min(self.FULL_DAY_HOURS, hours)
+        elif 'heure' in unit:
+            # Valeur en heures travaillées
+            return min(self.FULL_DAY_HOURS, value)
         else:
-            # Pas de code = journée complète travaillée
-            return 8.0
-    except (ValueError, TypeError):
-        # Si conversion impossible, considérer comme journée complète
-        return 8.0
+            # Valeur en heures d'absence (comportement par défaut)
+            hours = self.FULL_DAY_HOURS - value
+            return max(0, hours)
 
 
-def calculer_jours_travailles(heures):
-    """
-    Convertit les heures travaillées en fraction de jour.
-    Exemple : 6h = 6/8 = 0.75 jour
+class StatisticsCalculator:
+    """Calculateur de statistiques pour les employés."""
 
-    Args:
-        heures (float): Nombre d'heures travaillées
+    def __init__(self):
+        self.hours_calculator = WorkHoursCalculator()
 
-    Returns:
-        float: Fraction de jour travaillé
-    """
+    def calculate_employee_statistics(self, df: pd.DataFrame) -> pd.DataFrame:
+        """
+        Calcule les statistiques pour chaque employé.
+
+        Args:
+            df: DataFrame filtré avec les données employés
+
+        Returns:
+            DataFrame avec les statistiques par employé
+        """
+        if df.empty:
+            logger.warning("DataFrame vide pour le calcul des statistiques")
+            return pd.DataFrame()
+
+        try:
+            logger.info(f"Calcul des statistiques pour {df['Gentile'].nunique()} employés")
+
+            # Calculer les heures travaillées
+            df_calc = df.copy()
+            work_results = df_calc.apply(self.hours_calculator.calculate_hours_worked, axis=1)
+
+            # Extraire les résultats
+            df_calc['Heures_Travaillees'] = [r.hours_worked for r in work_results]
+            df_calc['Est_Jour_Complet'] = [r.is_full_day for r in work_results]
+            df_calc['Est_Jour_Partiel'] = [r.is_partial_day for r in work_results]
+            df_calc['Est_Absent'] = [r.is_absent for r in work_results]
+            df_calc['Jours_Travailles'] = df_calc['Heures_Travaillees'] / 8.0
+
+            # Grouper par employé
+            group_columns = self._get_grouping_columns(df_calc)
+
+            stats = df_calc.groupby(group_columns).agg(
+                Nb_Jours_Complets=('Est_Jour_Complet', 'sum'),
+                Nb_Jours_Partiels=('Est_Jour_Partiel', 'sum'),
+                Nb_Jours_Absents=('Est_Absent', 'sum'),
+                Nb_Jours_Presents=('Est_Jour_Complet', 'sum'),  # Seuls les jours complets
+                Total_Jours_Travailles=('Jours_Travailles', 'sum'),
+                Total_Heures_Travaillees=('Heures_Travaillees', 'sum'),
+                Total_Heures_Absence=('Heures_Travaillees', lambda x: sum(8.0 - x))
+            ).reset_index()
+
+            # Calculer le pourcentage de présence
+            stats['Presence_Pourcentage_365j'] = (
+                stats['Nb_Jours_Presents'] / 365 * 100
+            ).round(2)
+
+            # Arrondir les valeurs
+            stats['Total_Jours_Travailles'] = stats['Total_Jours_Travailles'].round(2)
+
+            logger.info(f"Statistiques calculées pour {len(stats)} employés")
+            return stats
+
+        except Exception as e:
+            logger.error(f"Erreur lors du calcul des statistiques: {e}")
+            raise CalculationError(f"Impossible de calculer les statistiques: {e}")
+
+    def calculate_team_averages(self, df_stats: pd.DataFrame) -> pd.DataFrame:
+        """
+        Calcule les moyennes par équipe.
+
+        Args:
+            df_stats: DataFrame avec les statistiques par employé
+
+        Returns:
+            DataFrame avec les moyennes par équipe
+        """
+        if df_stats.empty:
+            logger.warning("Aucune statistique pour calculer les moyennes d'équipe")
+            return pd.DataFrame()
+
+        try:
+            logger.info("Calcul des moyennes par équipe")
+
+            moyennes = df_stats.groupby('Équipe').agg(
+                Nb_Employés=('Nom', 'count'),
+                Moy_Jours_Présents_Complets=('Jours_Présents_Complets', 'mean'),
+                Moy_Jours_Partiels=('Jours_Partiels', 'mean'),
+                Moy_Total_Jours_Travaillés=('Total_Jours_Travaillés', 'mean'),
+                Moy_Total_Heures=('Total_Heures_Travaillées', 'mean'),
+                Moy_Jours_Complets=('Jours_Complets', 'mean'),
+                Moy_Jours_Absents=('Jours_Absents', 'mean'),
+                Moy_Heures_Absence=('Total_Heures_Absence', 'mean'),
+                Moy_Présence_365j=('Présence_%_365j', 'mean')
+            ).reset_index()
+
+            # Arrondir les valeurs
+            numeric_columns = moyennes.select_dtypes(include=['float64', 'int64']).columns
+            moyennes[numeric_columns] = moyennes[numeric_columns].round(2)
+
+            # Arrondir spécifiquement les jours partiels à 1 décimale
+            if 'Moy_Jours_Partiels' in moyennes.columns:
+                moyennes['Moy_Jours_Partiels'] = moyennes['Moy_Jours_Partiels'].round(1)
+
+            logger.info(f"Moyennes calculées pour {len(moyennes)} équipes")
+            return moyennes
+
+        except Exception as e:
+            logger.error(f"Erreur lors du calcul des moyennes: {e}")
+            raise CalculationError(f"Impossible de calculer les moyennes: {e}")
+
+    def _get_grouping_columns(self, df: pd.DataFrame) -> list:
+        """Détermine les colonnes de groupement disponibles."""
+        base_columns = ['Gentile', 'Equipe (Lib.)', 'Nom', 'Prénom']
+
+        # Ajouter 'UM (Lib)' si disponible
+        if 'UM (Lib)' in df.columns:
+            base_columns.append('UM (Lib)')
+
+        return base_columns
+
+
+# Instance globale du calculateur
+statistics_calculator = StatisticsCalculator()
+
+# Fonctions de compatibilité avec l'ancienne API
+def calculer_heures_travaillees(row: pd.Series) -> float:
+    """Calcule les heures travaillées (fonction de compatibilité)."""
+    calculator = WorkHoursCalculator()
+    result = calculator.calculate_hours_worked(row)
+    return result.hours_worked
+
+def calculer_jours_travailles(heures: float) -> float:
+    """Convertit les heures en fraction de jour (fonction de compatibilité)."""
     return heures / 8.0
 
+def calculer_statistiques_employes(df_filtre: pd.DataFrame) -> pd.DataFrame:
+    """Calcule les statistiques employés (fonction de compatibilité)."""
+    return statistics_calculator.calculate_employee_statistics(df_filtre)
 
-def calculer_statistiques_employes(df_filtre):
-    """
-    Calcule les statistiques pour chaque employé selon la nouvelle logique.
-    Sépare les jours complets, partiels et absents.
-
-    Args:
-        df_filtre (pd.DataFrame): DataFrame filtré
-
-    Returns:
-        pd.DataFrame: DataFrame avec les statistiques par employé
-    """
-    # Calculer les heures travaillées pour chaque ligne
-    df_filtre['Heures_Travaillees'] = df_filtre.apply(calculer_heures_travaillees, axis=1)
-
-    # Calculer les jours travaillés (en fraction)
-    df_filtre['Jours_Travailles'] = df_filtre['Heures_Travaillees'].apply(calculer_jours_travailles)
-
-    # Identifier les jours partiels : quand il y a un code d'absence avec une valeur
-    # Cela signifie que l'employé a travaillé partiellement (8h - valeur)
-    df_filtre['Est_Jour_Partiel'] = (
-        pd.notna(df_filtre['Code']) &
-        (df_filtre['Code'] != '') &
-        (df_filtre['Code'] != ' ') &
-        pd.notna(df_filtre['Valeur']) &
-        (df_filtre['Valeur'] > 0)
-    )
-
-    # Préparer les colonnes pour le groupby
-    colonnes_groupby = ['Gentile', 'Equipe (Lib.)', 'Nom', 'Prénom']
-
-    # Ajouter 'UM (Lib)' si elle existe dans le DataFrame
-    if 'UM (Lib)' in df_filtre.columns:
-        colonnes_groupby.append('UM (Lib)')
-
-    # Calculer les statistiques par employé
-    stats = df_filtre.groupby(colonnes_groupby).agg(
-        # Jours complets (8h exactement)
-        Nb_Jours_Complets=('Heures_Travaillees', lambda x: sum(x == 8.0)),
-
-        # Jours partiels (heures entre 0 et 8, exclus)
-        Nb_Jours_Partiels=('Est_Jour_Partiel', 'sum'),
-
-        # Jours absents (0h)
-        Nb_Jours_Absents=('Heures_Travaillees', lambda x: sum(x == 0.0)),
-
-        # Jours présents = jours complets uniquement (pas les partiels)
-        Nb_Jours_Presents=('Heures_Travaillees', lambda x: sum(x == 8.0)),
-
-        # Total jours travaillés (en fraction de jours)
-        Total_Jours_Travailles=('Jours_Travailles', 'sum'),
-
-        # Total heures travaillées
-        Total_Heures_Travaillees=('Heures_Travaillees', 'sum'),
-
-        # Total heures d'absence
-        Total_Heures_Absence=('Heures_Travaillees', lambda x: sum(8.0 - x))
-    ).reset_index()
-
-    # Calculer le pourcentage de présence sur 365 jours (basé sur les jours complets)
-    stats['Presence_Pourcentage_365j'] = (stats['Nb_Jours_Presents'] / 365 * 100).round(2)
-
-    # Arrondir Total_Jours_Travailles au centième près (2 décimales)
-    stats['Total_Jours_Travailles'] = stats['Total_Jours_Travailles'].round(2)
-
-    return stats
-
-
-def calculer_moyennes_equipe(df_stats):
-    """
-    Calcule les moyennes par équipe selon la nouvelle structure.
-
-    Args:
-        df_stats (pd.DataFrame): DataFrame avec les statistiques par employé
-
-    Returns:
-        pd.DataFrame: DataFrame avec les moyennes par équipe
-    """
-    moyennes = df_stats.groupby('Équipe').agg(
-        Nb_Employés=('Nom', 'count'),
-        Moy_Jours_Présents_Complets=('Jours_Présents_Complets', 'mean'),
-        Moy_Jours_Partiels=('Jours_Partiels', 'mean'),
-        Moy_Total_Jours_Travaillés=('Total_Jours_Travaillés', 'mean'),
-        Moy_Total_Heures=('Total_Heures_Travaillées', 'mean'),
-        Moy_Jours_Complets=('Jours_Complets', 'mean'),
-        Moy_Jours_Absents=('Jours_Absents', 'mean'),
-        Moy_Heures_Absence=('Total_Heures_Absence', 'mean'),
-        Moy_Présence_365j=('Présence_%_365j', 'mean')
-    ).reset_index()
-
-    # Arrondir toutes les colonnes à 2 décimales
-    moyennes = moyennes.round(2)
-
-    # Arrondir spécifiquement Moy_Jours_Partiels à 1 décimale (dixième près)
-    if 'Moy_Jours_Partiels' in moyennes.columns:
-        moyennes['Moy_Jours_Partiels'] = moyennes['Moy_Jours_Partiels'].round(1)
-
-    return moyennes
+def calculer_moyennes_equipe(df_stats: pd.DataFrame) -> pd.DataFrame:
+    """Calcule les moyennes d'équipe (fonction de compatibilité)."""
+    return statistics_calculator.calculate_team_averages(df_stats)

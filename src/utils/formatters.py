@@ -4,9 +4,6 @@ Module de formatage des données PMT.
 author : CAPELLE Gabin
 """
 
-from config import COLONNES_FINALES
-
-
 def formater_donnees_finales(stats_employes):
     """
     Formate le DataFrame final avec les colonnes demandées et les renomme.
