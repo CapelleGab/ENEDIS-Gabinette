@@ -51,7 +51,7 @@ class ExportService:
 
             # Générer un nom de fichier par défaut
             timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-            default_filename = f"export_pmt_categories_{timestamp}.xlsx"
+            default_filename = f"export_gabinette_{timestamp}.xlsx"
 
             # Utiliser le dossier Documents comme dossier par défaut
             documents_path = Path.home() / "Documents"
@@ -71,7 +71,7 @@ class ExportService:
 
         if not output_path:
             timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-            output_path = OUTPUT_DIR / f"export_pmt_categories_{timestamp}.xlsx"
+            output_path = OUTPUT_DIR / f"export_gabinette_{timestamp}.xlsx"
         else:
             output_path = Path(output_path)
 
@@ -240,7 +240,7 @@ class ExportService:
 
             # Générer un nom de fichier par défaut
             timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-            default_filename = f"resume_classifications_{timestamp}.txt"
+            default_filename = f"resume_gabinette_{timestamp}.txt"
 
             # Utiliser le dossier Documents comme dossier par défaut
             documents_path = Path.home() / "Documents"
@@ -1071,7 +1071,7 @@ class ExportService:
             'data_labels': {'value': True},  # Afficher les valeurs sur les barres
         })
 
-        chart.set_title({'name': 'Total heures supplémentaires des employés ASTREINTES par agence'})
+        chart.set_title({'name': "Total heures supplémentaires des employés ASTREINTES (Hors cycle d'astreinte) par agence"})
         chart.set_x_axis({'name': 'Agence'})
         chart.set_y_axis({'name': 'Heures supplémentaires (total)'})
         chart.set_size({'width': 600, 'height': 400})  # Un peu plus grand pour la lisibilité
@@ -1132,7 +1132,7 @@ class ExportService:
             'data_labels': {'value': True},  # Afficher les valeurs sur les barres
         })
 
-        chart.set_title({'name': 'Moyenne heures supplémentaires par employé ASTREINTES par agence'})
+        chart.set_title({'name': "Moyenne heures supplémentaires par employé ASTREINTES (Hors cycle d'astreinte) par agence"})
         chart.set_x_axis({'name': 'Agence'})
         chart.set_y_axis({'name': 'Heures supplémentaires (moyenne par employé)'})
         chart.set_size({'width': 600, 'height': 400})
@@ -1324,7 +1324,7 @@ class ExportService:
             'data_labels': {'value': True},
         })
 
-        chart.set_title({'name': 'Nombre d\'arrêts maladie par agence (41 et 5H)'})
+        chart.set_title({'name': 'Nombre de jours d\'arrêts maladie par agence (41 et 5H)'})
         chart.set_x_axis({'name': 'Agence'})
         chart.set_y_axis({'name': 'Nombre d\'arrêts'})
         chart.set_size({'width': 700, 'height': 450})  # Un peu plus grand pour accommoder les deux séries

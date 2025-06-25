@@ -9,7 +9,7 @@ Application de bureau Python pour le traitement et l'analyse de fichiers CSV sp�
 ### Structure du Projet
 
 ```
-PMTAnalytics/
+GABINETTE/
 ├── src/
 │   ├── __init__.py
 │   ├── main.py                 # Point d'entrée principal
