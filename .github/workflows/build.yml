@@ -1,0 +1,127 @@
+name: Build Gabinette Executables
+
+run-name: 🚀 Build Gabinette Executables (${{ github.ref_name || 'manual-build' }})
+
+on:
+  push:
+    tags:
+      - 'v*'  # Déclenche sur chaque push de tag
+
+permissions:
+  contents: write
+  pull-requests: read
+
+jobs:
+  build-windows:
+    name: Build Windows (.exe)
+    runs-on: windows-latest
+    env:
+      APP_NAME: Gabinette
+      MAIN_SCRIPT: run.py
+      ICON_PATH: assets/logo/gabinette-logo.ico
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: 3.11
+      - name: Cache pip
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/pip
+          key: windows-pip-${{ hashFiles('**/requirements.txt') }}
+          restore-keys: |
+            windows-pip-
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install pyinstaller
+      - name: Build Windows executable (windowed)
+        run: |
+          pyinstaller --noconfirm --onefile --windowed --name "Gabinette" --icon "assets/logo/gabinette-logo.ico" run.py > pyinstaller-win.log 2>&1
+      - name: Archive Windows .exe
+        uses: actions/upload-artifact@v4
+        with:
+          name: gabinette-windows-exe
+          path: dist/Gabinette.exe
+      - name: Upload PyInstaller log (Windows)
+        uses: actions/upload-artifact@v4
+        with:
+          name: pyinstaller-win-log
+          path: pyinstaller-win.log
+
+  build-macos:
+    name: Build macOS (.app)
+    runs-on: macos-latest
+    env:
+      APP_NAME: Gabinette
+      MAIN_SCRIPT: run.py
+      ICON_PATH: assets/logo/gabinette-logo.ico
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: 3.11
+      - name: Cache pip
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/pip
+          key: macos-pip-${{ hashFiles('**/requirements.txt') }}
+          restore-keys: |
+            macos-pip-
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install pyinstaller
+      - name: Build macOS .app
+        run: |
+          pyinstaller --noconfirm --windowed --name "Gabinette" --icon "assets/logo/gabinette-logo.ico" run.py > pyinstaller-mac.log 2>&1
+      - name: Debug list dist
+        run: ls -l dist/
+      - name: Archive macOS .app
+        run: |
+          mkdir -p packaged_app && cp -R dist/Gabinette.app packaged_app/
+        shell: bash
+      - name: Upload macOS .app artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: gabinette-macos-app
+          path: packaged_app/Gabinette.app
+      - name: Upload PyInstaller log (macOS)
+        uses: actions/upload-artifact@v4
+        with:
+          name: pyinstaller-mac-log
+          path: pyinstaller-mac.log
+
+  release:
+    name: Release executables
+    needs: [build-windows, build-macos]
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/')
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Download Windows artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: gabinette-windows-exe
+          path: ./artifacts/windows
+      - name: Download macOS artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: gabinette-macos-app
+          path: ./artifacts/macos
+      - name: Create Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            artifacts/windows/Gabinette.exe
+            artifacts/macos/Gabinette.app
+          body_path: CHANGELOG.md
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} 

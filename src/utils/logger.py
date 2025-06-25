@@ -1,93 +1,86 @@
 """
-Module de logging pour PMT Analytics.
-
-Author: CAPELLE Gabin
-Version: 2.0.0
+Système de logging centralisé pour La Gabinette
 """
 
 import logging
-import sys
+import logging.handlers
 from pathlib import Path
 from typing import Optional
-from datetime import datetime
+
+from src.config.settings import LOGGING_CONFIG
 
 
-class PMTLogger:
-    """Gestionnaire de logging pour PMT Analytics."""
+class Logger:
+    """Gestionnaire de logging centralisé"""
 
-    def __init__(self, name: str = "PMTAnalytics"):
-        self.name = name
-        self.logger = logging.getLogger(name)
-        self._setup_logger()
+    _instance: Optional['Logger'] = None
+    _logger: Optional[logging.Logger] = None
 
-    def _setup_logger(self):
-        """Configure le logger avec les handlers appropriés."""
-        if self.logger.handlers:
-            return  # Déjà configuré
+    def __new__(cls) -> 'Logger':
+        if cls._instance is None:
+            cls._instance = super().__new__(cls)
+        return cls._instance
 
-        self.logger.setLevel(logging.INFO)
+    def __init__(self):
+        if self._logger is None:
+            self._setup_logger()
 
-        # Format des messages
-        formatter = logging.Formatter(
-            '%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-            datefmt='%Y-%m-%d %H:%M:%S'
-        )
+    def _setup_logger(self) -> None:
+        """Configure le logger principal"""
+        self._logger = logging.getLogger("PMTAnalytics")
+        self._logger.setLevel(getattr(logging, LOGGING_CONFIG["level"]))
 
-        # Handler console
-        console_handler = logging.StreamHandler(sys.stdout)
-        console_handler.setLevel(logging.INFO)
-        console_handler.setFormatter(formatter)
-        self.logger.addHandler(console_handler)
-
-        # Handler fichier (optionnel)
-        try:
-            log_dir = Path("logs")
-            log_dir.mkdir(exist_ok=True)
-
-            log_file = log_dir / f"pmt_analytics_{datetime.now().strftime('%Y%m%d')}.log"
-            file_handler = logging.FileHandler(log_file, encoding='utf-8')
+        # Éviter la duplication des handlers
+        if not self._logger.handlers:
+            # Handler pour fichier avec rotation
+            file_handler = logging.handlers.RotatingFileHandler(
+                LOGGING_CONFIG["file"],
+                maxBytes=LOGGING_CONFIG["max_bytes"],
+                backupCount=LOGGING_CONFIG["backup_count"],
+                encoding='utf-8'
+            )
             file_handler.setLevel(logging.DEBUG)
+
+            # Handler pour console
+            console_handler = logging.StreamHandler()
+            console_handler.setLevel(logging.INFO)
+
+            # Formatter
+            formatter = logging.Formatter(LOGGING_CONFIG["format"])
             file_handler.setFormatter(formatter)
-            self.logger.addHandler(file_handler)
-        except Exception:
-            # Si on ne peut pas créer le fichier de log, on continue sans
-            pass
+            console_handler.setFormatter(formatter)
 
-    def info(self, message: str):
-        """Log un message d'information."""
-        self.logger.info(message)
+            # Ajouter les handlers
+            self._logger.addHandler(file_handler)
+            self._logger.addHandler(console_handler)
 
-    def warning(self, message: str):
-        """Log un avertissement."""
-        self.logger.warning(message)
+    def get_logger(self, name: str = None) -> logging.Logger:
+        """Retourne un logger avec le nom spécifié"""
+        if name:
+            return logging.getLogger(f"PMTAnalytics.{name}")
+        return self._logger
 
-    def error(self, message: str):
-        """Log une erreur."""
-        self.logger.error(message)
+    def debug(self, message: str) -> None:
+        """Log un message de debug"""
+        self._logger.debug(message)
 
-    def debug(self, message: str):
-        """Log un message de debug."""
-        self.logger.debug(message)
+    def info(self, message: str) -> None:
+        """Log un message d'information"""
+        self._logger.info(message)
 
-    def success(self, message: str):
-        """Log un message de succès."""
-        self.logger.info(f"✅ {message}")
+    def warning(self, message: str) -> None:
+        """Log un message d'avertissement"""
+        self._logger.warning(message)
 
-    def step(self, message: str):
-        """Log une étape de traitement."""
-        self.logger.info(f"🔄 {message}")
+    def error(self, message: str) -> None:
+        """Log un message d'erreur"""
+        self._logger.error(message)
 
-    def result(self, message: str):
-        """Log un résultat."""
-        self.logger.info(f"📊 {message}")
+    def critical(self, message: str) -> None:
+        """Log un message critique"""
+        self._logger.critical(message)
 
 
 # Instance globale du logger
-pmt_logger = PMTLogger()
-
-# Fonctions de compatibilité
-def get_logger(name: Optional[str] = None) -> PMTLogger:
-    """Retourne une instance du logger."""
-    if name:
-        return PMTLogger(name)
-    return pmt_logger
+logger = Logger()
+ 
