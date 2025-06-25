@@ -63,32 +63,6 @@ python run.py
 python src/main.py
 ```
 
-### Build d'exécutables
-
-Le projet inclut un système de build automatique pour créer des exécutables natifs.
-
-> **Note :** Les scripts de build sont situés dans `src/scripts/` et le système de build local/CI est aligné sur le modèle StatistiquePMT (multi-plateforme, PyInstaller, GitHub Actions).
-
-#### Validation du système de build
-
-```bash
-python src/scripts/validate_build.py
-```
-
-#### Compilation locale
-
-```bash
-python src/scripts/build_ci.py
-```
-
-#### Build automatique via GitHub Actions
-
-```bash
-# Créer un tag de version
-git tag v1.0.0
-git push origin v1.0.0
-```
-
 Voir [docs/GITHUB_ACTIONS.md](docs/GITHUB_ACTIONS.md) pour plus de détails.
 
 ## Fonctionnalités
