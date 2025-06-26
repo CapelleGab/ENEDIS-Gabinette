@@ -227,8 +227,8 @@ class MainWindow:
         # Onglet Filtres
         self._create_filters_tab()
 
-        # Onglet Classifications
-        self._create_classification_tab()
+        # Onglet Comparaison
+        self._create_comparison_tab()
 
     def _create_data_tab(self):
         """Crée l'onglet des données"""
@@ -342,33 +342,217 @@ class MainWindow:
         v_scrollbar_filtered.grid(row=0, column=1, sticky="ns")
         h_scrollbar_filtered.grid(row=1, column=0, sticky="ew")
 
-
-    def _create_classification_tab(self):
-        """Crée l'onglet des classifications d'employés"""
-        classification_frame = ttk_bs.Frame(self.notebook)
-        self.notebook.add(classification_frame, text="👥 Classifications")
+    def _create_comparison_tab(self):
+        """Crée l'onglet de comparaison de fichiers XLSX"""
+        comparison_frame = ttk_bs.Frame(self.notebook)
+        self.notebook.add(comparison_frame, text="⚖️ Comparaison")
 
         # Configuration de la grille
-        classification_frame.grid_rowconfigure(1, weight=1)
-        classification_frame.grid_columnconfigure(0, weight=1)
+        comparison_frame.grid_rowconfigure(2, weight=1)
+        comparison_frame.grid_columnconfigure(0, weight=1)
 
-        # Zone de résumé des classifications
-        summary_frame = ttk_bs.LabelFrame(classification_frame, text="Résumé des classifications", padding=10)
-        summary_frame.grid(row=0, column=0, sticky="ew", padx=5, pady=5)
+        # Zone de sélection des fichiers
+        files_frame = ttk_bs.LabelFrame(comparison_frame, text="Sélection des fichiers à comparer", padding=10)
+        files_frame.grid(row=0, column=0, sticky="ew", padx=5, pady=5)
+        files_frame.grid_columnconfigure(1, weight=1)
 
-        self.classification_summary_text = ttk_bs.Text(summary_frame, height=8, state=DISABLED)
-        self.classification_summary_text.pack(fill=BOTH, expand=True)
+        # Fichier 1
+        ttk_bs.Label(files_frame, text="Fichier 1:").grid(row=0, column=0, sticky="w", padx=(0, 10))
+        self.file1_path_var = tk.StringVar()
+        self.file1_entry = ttk_bs.Entry(files_frame, textvariable=self.file1_path_var, state="readonly")
+        self.file1_entry.grid(row=0, column=1, sticky="ew", padx=(0, 10))
+        ttk_bs.Button(
+            files_frame,
+            text="📂 Parcourir",
+            command=self._select_file1,
+            width=12
+        ).grid(row=0, column=2)
 
-        # Zone des graphiques
-        charts_frame = ttk_bs.LabelFrame(classification_frame, text="Graphiques", padding=10)
-        charts_frame.grid(row=1, column=0, sticky="nsew", padx=5, pady=5)
+        # Fichier 2
+        ttk_bs.Label(files_frame, text="Fichier 2:").grid(row=1, column=0, sticky="w", padx=(0, 10), pady=(10, 0))
+        self.file2_path_var = tk.StringVar()
+        self.file2_entry = ttk_bs.Entry(files_frame, textvariable=self.file2_path_var, state="readonly")
+        self.file2_entry.grid(row=1, column=1, sticky="ew", padx=(0, 10), pady=(10, 0))
+        ttk_bs.Button(
+            files_frame,
+            text="📂 Parcourir",
+            command=self._select_file2,
+            width=12
+        ).grid(row=1, column=2, pady=(10, 0))
 
-        ttk_bs.Label(
-            charts_frame,
-            text="📊 Zone réservée aux graphiques de classification\n(Fonctionnalité à développer)",
-            font=("Arial", 12),
-            foreground="gray"
-        ).pack(expand=True)
+        # Zone des boutons d'action
+        actions_frame = ttk_bs.LabelFrame(comparison_frame, text="Actions", padding=10)
+        actions_frame.grid(row=1, column=0, sticky="ew", padx=5, pady=5)
+
+        # Frame pour centrer les boutons
+        buttons_frame = ttk_bs.Frame(actions_frame)
+        buttons_frame.pack(anchor="center")
+
+        # Bouton Comparer
+        self.compare_button = ttk_bs.Button(
+            buttons_frame,
+            text="⚖️ Lancer la comparaison",
+            bootstyle="primary",
+            command=self._launch_comparison,
+            state=DISABLED,
+            width=20
+        )
+        self.compare_button.pack(side=LEFT, padx=(0, 10))
+
+        # Bouton Exporter
+        self.export_comparison_button = ttk_bs.Button(
+            buttons_frame,
+            text="📊 Exporter la comparaison",
+            bootstyle="success",
+            command=self._export_comparison,
+            state=DISABLED,
+            width=20
+        )
+        self.export_comparison_button.pack(side=LEFT)
+
+        # Zone des résultats de comparaison
+        results_frame = ttk_bs.LabelFrame(comparison_frame, text="Résultats de la comparaison", padding=5)
+        results_frame.grid(row=2, column=0, sticky="nsew", padx=5, pady=5)
+        results_frame.grid_rowconfigure(0, weight=1)
+        results_frame.grid_columnconfigure(0, weight=1)
+
+        # Zone de texte pour afficher les résultats
+        self.comparison_results_text = ttk_bs.Text(results_frame, state=DISABLED)
+        
+        # Scrollbar pour les résultats
+        results_scrollbar = ttk_bs.Scrollbar(results_frame, orient=VERTICAL, command=self.comparison_results_text.yview)
+        self.comparison_results_text.configure(yscrollcommand=results_scrollbar.set)
+
+        # Placement
+        self.comparison_results_text.grid(row=0, column=0, sticky="nsew")
+        results_scrollbar.grid(row=0, column=1, sticky="ns")
+
+        # Variables pour stocker les résultats de comparaison
+        self.comparison_results = None
+
+    def _select_file1(self):
+        """Sélectionne le premier fichier XLSX"""
+        file_path = filedialog.askopenfilename(
+            title="Sélectionner le premier fichier XLSX",
+            filetypes=[("Fichiers Excel", "*.xlsx"), ("Tous les fichiers", "*.*")],
+            initialdir=str(Path.home() / "Documents")
+        )
+        
+        if file_path:
+            self.file1_path_var.set(file_path)
+            self._check_files_selected()
+
+    def _select_file2(self):
+        """Sélectionne le deuxième fichier XLSX"""
+        file_path = filedialog.askopenfilename(
+            title="Sélectionner le deuxième fichier XLSX",
+            filetypes=[("Fichiers Excel", "*.xlsx"), ("Tous les fichiers", "*.*")],
+            initialdir=str(Path.home() / "Documents")
+        )
+        
+        if file_path:
+            self.file2_path_var.set(file_path)
+            self._check_files_selected()
+
+    def _check_files_selected(self):
+        """Vérifie si les deux fichiers sont sélectionnés et active le bouton de comparaison"""
+        if self.file1_path_var.get() and self.file2_path_var.get():
+            self.compare_button.config(state=NORMAL)
+        else:
+            self.compare_button.config(state=DISABLED)
+            self.export_comparison_button.config(state=DISABLED)
+
+    def _launch_comparison(self):
+        """Lance la comparaison des deux fichiers"""
+        file1_path = self.file1_path_var.get()
+        file2_path = self.file2_path_var.get()
+        
+        if not file1_path or not file2_path:
+            messagebox.showerror("Erreur", "Veuillez sélectionner les deux fichiers à comparer.")
+            return
+
+        # Désactiver le bouton et afficher le loader
+        self.compare_button.config(state=DISABLED, text="⏳ Comparaison en cours...")
+        self._set_loading_state(True)
+        self.status_label.config(text="Comparaison en cours...")
+
+        def comparison_worker():
+            try:
+                # Importer le service de comparaison
+                from src.services.compare import ComparisonService
+                comparison_service = ComparisonService()
+                
+                # Lancer la comparaison
+                results = comparison_service.compare_files(file1_path, file2_path)
+                
+                # Mettre à jour l'UI dans le thread principal
+                self.root.after(0, lambda: self._on_comparison_completed(results))
+                
+            except Exception as e:
+                self.root.after(0, lambda: self._on_comparison_error(str(e)))
+
+        # Lancer la comparaison dans un thread séparé
+        thread = threading.Thread(target=comparison_worker, daemon=True)
+        thread.start()
+
+    def _on_comparison_completed(self, results):
+        """Callback appelé quand la comparaison est terminée"""
+        self._set_loading_state(False)
+        self.compare_button.config(state=NORMAL, text="⚖️ Lancer la comparaison")
+        
+        # Stocker les résultats
+        self.comparison_results = results
+        
+        # Afficher les résultats
+        self._display_comparison_results(results)
+        
+        # Activer le bouton d'export
+        self.export_comparison_button.config(state=NORMAL)
+        
+        self.status_label.config(text="Comparaison terminée")
+        self.logger.info("Comparaison terminée avec succès")
+
+    def _on_comparison_error(self, error_message):
+        """Callback appelé en cas d'erreur de comparaison"""
+        self._set_loading_state(False)
+        self.compare_button.config(state=NORMAL, text="⚖️ Lancer la comparaison")
+        
+        messagebox.showerror("Erreur de comparaison", f"Erreur lors de la comparaison:\n{error_message}")
+        self.status_label.config(text="Erreur de comparaison")
+        self.logger.error(f"Erreur de comparaison: {error_message}")
+
+    def _display_comparison_results(self, results):
+        """Affiche les résultats de la comparaison"""
+        self.comparison_results_text.config(state=NORMAL)
+        self.comparison_results_text.delete(1.0, tk.END)
+        
+        # Formatter les résultats pour l'affichage
+        display_text = results.get('summary', 'Aucun résultat disponible')
+        
+        self.comparison_results_text.insert(1.0, display_text)
+        self.comparison_results_text.config(state=DISABLED)
+
+    def _export_comparison(self):
+        """Exporte les résultats de la comparaison"""
+        if not self.comparison_results:
+            messagebox.showerror("Erreur", "Aucun résultat de comparaison à exporter.")
+            return
+
+        try:
+            # Importer le service de comparaison
+            from src.services.compare import ComparisonService
+            comparison_service = ComparisonService()
+            
+            # Exporter les résultats
+            export_path = comparison_service.export_comparison_results(self.comparison_results, use_file_dialog=True)
+            
+            messagebox.showinfo("Export réussi", f"Comparaison exportée vers:\n{export_path}")
+            self.logger.info(f"Export de comparaison réussi: {export_path}")
+            
+        except Exception as e:
+            if "annulé par l'utilisateur" not in str(e):
+                messagebox.showerror("Erreur d'export", f"Erreur lors de l'export de la comparaison:\n{str(e)}")
+                self.logger.error(f"Erreur export comparaison: {str(e)}")
 
     def _create_status_bar(self):
         """Crée la barre de statut"""
@@ -526,64 +710,15 @@ Temps de traitement: {result.processing_time:.2f}s"""
         self.team_filter["values"] = ["Toutes"] + teams
         self.team_filter.set("Toutes")
 
-
-
     def _update_classifications(self):
         """Met à jour l'affichage des classifications d'employés"""
-        if not self.current_records:
-            return
-
-        try:
-            # Obtenir les classifications
-            classifications = self.csv_processor.get_classifications()
-
-            # Mettre à jour le résumé
-            self._update_classification_summary(classifications)
-
-        except Exception as e:
-            self.logger.error(f"Erreur lors de la mise à jour des classifications: {str(e)}")
+        # Cette méthode n'est plus utilisée car l'onglet Classifications a été supprimé
+        pass
 
     def _update_classification_summary(self, classifications: Dict[str, List[PMTRecord]]):
         """Met à jour le résumé des classifications"""
-        try:
-            summary = self.csv_processor.get_classification_summary()
-
-            summary_text = "RÉSUMÉ DES CLASSIFICATIONS D'EMPLOYÉS\n"
-            summary_text += "=" * 60 + "\n\n"
-
-            # Statistiques générales
-            total_employees = sum(data.get('nombre_employes', 0) for data in summary.values())
-            total_records = sum(data.get('nombre_enregistrements', 0) for data in summary.values())
-
-            summary_text += f"Total employés classifiés: {total_employees}\n"
-            summary_text += f"Total enregistrements: {total_records}\n\n"
-
-            # Détails par catégorie
-            for category, data in summary.items():
-                summary_text += f"{category}:\n"
-                summary_text += f"  • Employés: {data.get('nombre_employes', 0)}\n"
-                summary_text += f"  • Enregistrements: {data.get('nombre_enregistrements', 0)}\n"
-                summary_text += f"  • Pourcentage: {data.get('nombre_enregistrements', 0) / total_records * 100:.1f}%\n"
-
-                # Répartition par agence
-                agences = data.get('repartition_agences', {})
-                if agences:
-                    summary_text += "  • Répartition par agence:\n"
-                    for agence, count in agences.items():
-                        if count > 0:
-                            summary_text += f"    - {agence}: {count}\n"
-                summary_text += "\n"
-
-            # Mettre à jour le widget texte
-            self.classification_summary_text.config(state=NORMAL)
-            self.classification_summary_text.delete(1.0, tk.END)
-            self.classification_summary_text.insert(1.0, summary_text)
-            self.classification_summary_text.config(state=DISABLED)
-
-        except Exception as e:
-            self.logger.error(f"Erreur lors de la mise à jour du résumé: {str(e)}")
-
-
+        # Cette méthode n'est plus utilisée car l'onglet Classifications a été supprimé
+        pass
 
     def _get_agence_from_equipe(self, equipe_lib: str) -> str:
         """Détermine l'agence à partir du libellé d'équipe"""
